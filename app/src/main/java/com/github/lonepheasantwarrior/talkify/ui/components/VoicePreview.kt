@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -143,7 +144,7 @@ private fun GroupedVoiceList(
     
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier.height(200.dp)
+        modifier = Modifier.heightIn(max = 200.dp)
     ) {
         groupedVoices.forEach { (group, groupVoices) ->
             item {

@@ -391,6 +391,7 @@ class TencentTtsEngine : AbstractTtsEngine() {
                     textSent = true
                     try {
                         currentSynthesizer?.process(currentChunk)
+                        currentSynthesizer?.stop()
                     } catch (e: Exception) {
                         logError("Error sending text to synthesizer", e)
                         if (!hasCompleted && !isCancelled) {
@@ -404,6 +405,9 @@ class TencentTtsEngine : AbstractTtsEngine() {
 
             override fun onSynthesisCancel() {
                 logDebug("Synthesis cancelled")
+                if (!isCancelled) {
+                    isCancelled = true
+                }
             }
 
             override fun onSynthesisFail(response: SpeechSynthesizerResponse) {
@@ -609,9 +613,14 @@ class TencentTtsEngine : AbstractTtsEngine() {
         logInfo("Stopping synthesis")
         isCancelled = true
         try {
-            currentSynthesizer?.cancel()
+            currentSynthesizer?.stop()
         } catch (e: Exception) {
-            logError("Error stopping synthesizer", e)
+            logWarning("Error calling stop, trying cancel: ${e.message}")
+            try {
+                currentSynthesizer?.cancel()
+            } catch (cancelException: Exception) {
+                logError("Error cancelling synthesizer", cancelException)
+            }
         }
         currentSynthesizer = null
     }
@@ -620,9 +629,14 @@ class TencentTtsEngine : AbstractTtsEngine() {
         logInfo("Releasing engine")
         isCancelled = true
         try {
-            currentSynthesizer?.cancel()
+            currentSynthesizer?.stop()
         } catch (e: Exception) {
-            logError("Error cancelling synthesizer", e)
+            logWarning("Error calling stop in release, trying cancel: ${e.message}")
+            try {
+                currentSynthesizer?.cancel()
+            } catch (cancelException: Exception) {
+                logError("Error cancelling synthesizer", cancelException)
+            }
         }
         currentSynthesizer = null
         super.release()
