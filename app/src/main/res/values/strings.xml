@@ -128,6 +128,33 @@
     <string name="default_engine_banner_title">设为默认引擎</string>
     <string name="default_engine_banner_content">点击此处将 Talkify 设为默认语音合成引擎</string>
 
+    <!-- 关于页面 -->
+    <string name="about_title">关于</string>
+    <string name="about_version_format">版本 %1$s</string>
+    <string name="about_github">开源仓库</string>
+    <string name="about_github_url">https://github.com/LonePheasantWarrior/TalkifyTTS</string>
+    <string name="about_description">一款基于 Android 的现代化 TTS 引擎应用，连接云端大模型的高质量语音合成能力</string>
+    <string name="about_donate">打赏支持</string>
+    <string name="about_donate_description">如果这个项目对你有帮助，欢迎打赏支持</string>
+
+    <!-- 打赏功能 -->
+    <string name="donate_title">选择打赏方式</string>
+    <string name="donate_wechat">微信</string>
+    <string name="donate_alipay">支付宝</string>
+    <string name="donate_cancel">取消</string>
+
+    <!-- 打赏操作说明 -->
+    <string name="donate_wechat_title">微信打赏</string>
+    <string name="donate_wechat_message">二维码图片已保存到手机相册。\n\n请打开微信，点击「扫一扫」，然后选择「相册」扫描二维码完成打赏。</string>
+    <string name="donate_alipay_title">支付宝打赏</string>
+    <string name="donate_alipay_message">二维码图片已保存到手机相册。\n\n请打开支付宝，点击「扫一扫」，然后选择「相册」扫描二维码完成打赏。</string>
+    <string name="donate_save_success">二维码已保存到相册</string>
+    <string name="donate_save_failed">保存失败，请检查存储权限</string>
+    <string name="donate_photos_permission_title">需要存储权限</string>
+    <string name="donate_photos_permission_message">保存二维码图片到相册需要存储权限。是否前往授权？</string>
+    <string name="donate_photos_permission_grant">去授权</string>
+    <string name="donate_photos_permission_deny">取消</string>
+
     <!-- 系统通知 -->
     <string name="system_notification_channel_name">系统通知</string>
     <string name="system_notification_channel_description">系统级的重要通知</string>

@@ -11,6 +11,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -91,7 +92,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun MainScreen(
     modifier: Modifier = Modifier,
-    viewModel: MainViewModel = viewModel()
+    viewModel: MainViewModel = viewModel(),
+    onAboutClick: () -> Unit = {}
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val context = LocalContext.current
@@ -220,7 +222,9 @@ fun MainScreen(
         topBar = {
             LargeTopAppBar(
                 title = {
-                    Column {
+                    Column(
+                        modifier = Modifier.clickable(onClick = onAboutClick)
+                    ) {
                         Text(
                             text = "Talkify",
                             style = MaterialTheme.typography.headlineLarge

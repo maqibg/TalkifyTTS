@@ -10,8 +10,13 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
+import com.github.lonepheasantwarrior.talkify.ui.screens.AboutScreen
 import com.github.lonepheasantwarrior.talkify.ui.screens.MainScreen
 import com.github.lonepheasantwarrior.talkify.ui.theme.TalkifyTheme
 
@@ -26,19 +31,35 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         TtsLogger.i(TAG) { "MainActivity.onCreate: 应用启动" }
 
-        // 设置音量键控制媒体音量，确保语音预览时音量键可以调节播放音量
         setVolumeControlStream(AudioManager.STREAM_MUSIC)
 
         enableEdgeToEdge()
         setContent {
             TalkifyTheme {
+                val versionName = remember { packageManager.getPackageInfo(packageName, 0).versionName ?: "1.0.0" }
+                val navController = rememberNavController()
+
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MainScreen(
-                        modifier = Modifier.fillMaxSize()
-                    )
+                    NavHost(
+                        navController = navController,
+                        startDestination = "main"
+                    ) {
+                        composable("main") {
+                            MainScreen(
+                                modifier = Modifier.fillMaxSize(),
+                                onAboutClick = { navController.navigate("about") }
+                            )
+                        }
+                        composable("about") {
+                            AboutScreen(
+                                onBackClick = { navController.popBackStack() },
+                                versionName = versionName
+                            )
+                        }
+                    }
                 }
             }
         }
