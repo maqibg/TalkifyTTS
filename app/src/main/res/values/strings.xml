@@ -137,6 +137,19 @@
     <string name="about_donate">打赏支持</string>
     <string name="about_donate_description">如果这个项目对你有帮助，欢迎打赏支持</string>
 
+    <!-- 检查更新 -->
+    <string name="check_for_updates">检查更新</string>
+    <string name="update_no_available_title">已是最新版本</string>
+    <string name="update_no_available_message">当前版本已是最新版本</string>
+    <string name="update_network_timeout_title">无法检查更新</string>
+    <string name="update_network_timeout_message">网络超时，国内网络可能无法访问 GitHub</string>
+    <string name="update_network_error_title">网络错误</string>
+    <string name="update_network_error_message">网络连接失败: %1$s</string>
+    <string name="update_server_error_title">服务器错误</string>
+    <string name="update_server_error_message">GitHub 服务器返回错误: %1$d</string>
+    <string name="update_parse_error_title">解析错误</string>
+    <string name="update_parse_error_message">无法解析版本信息: %1$s</string>
+
     <!-- 打赏功能 -->
     <string name="donate_title">选择打赏方式</string>
     <string name="donate_wechat">微信</string>

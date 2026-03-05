@@ -37,6 +37,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -64,6 +65,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import com.github.lonepheasantwarrior.talkify.R
+import com.github.lonepheasantwarrior.talkify.domain.model.UpdateCheckResult
+import com.github.lonepheasantwarrior.talkify.infrastructure.app.update.UpdateChecker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -90,6 +93,10 @@ fun AboutScreen(
     var pendingDonateChannel by remember { mutableStateOf<DonateChannel?>(null) }
 
     val githubUrl = stringResource(R.string.about_github_url)
+
+    val updateChecker = remember { UpdateChecker() }
+    var isCheckingUpdate by remember { mutableStateOf(false) }
+    var showUpdateResult by remember { mutableStateOf<UpdateCheckResult?>(null) }
 
     val sheetState = rememberModalBottomSheetState()
 
@@ -191,6 +198,32 @@ fun AboutScreen(
                 textAlign = TextAlign.Center
             )
 
+            Spacer(modifier = Modifier.height(24.dp))
+
+            OutlinedButton(
+                onClick = {
+                    isCheckingUpdate = true
+                    scope.launch {
+                        val result = withContext(Dispatchers.IO) {
+                            updateChecker.checkForUpdates(versionName)
+                        }
+                        isCheckingUpdate = false
+                        showUpdateResult = result
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isCheckingUpdate
+            ) {
+                if (isCheckingUpdate) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+                Text(stringResource(R.string.check_for_updates))
+            }
+
             Spacer(modifier = Modifier.height(32.dp))
 
             Card(
@@ -230,7 +263,7 @@ fun AboutScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -355,6 +388,78 @@ fun AboutScreen(
             confirmButton = {
                 TextButton(onClick = { showDonateInstruction = null }) {
                     Text(stringResource(R.string.confirm))
+                }
+            }
+        )
+    }
+
+    showUpdateResult?.let { result ->
+        val (title, message, confirmText) = when (result) {
+            is UpdateCheckResult.UpdateAvailable -> Triple(
+                stringResource(R.string.update_available_title),
+                stringResource(R.string.update_version_format, result.updateInfo.versionName) + "\n\n" +
+                    stringResource(R.string.update_whats_new) + "\n" + result.updateInfo.releaseNotes,
+                stringResource(R.string.update_now)
+            )
+            is UpdateCheckResult.NoUpdateAvailable -> Triple(
+                stringResource(R.string.update_already_latest),
+                stringResource(R.string.update_already_latest),
+                stringResource(R.string.confirm)
+            )
+            is UpdateCheckResult.NetworkTimeout -> Triple(
+                stringResource(R.string.update_check_failed),
+                stringResource(R.string.update_check_failed_network),
+                stringResource(R.string.confirm)
+            )
+            is UpdateCheckResult.NetworkError -> Triple(
+                stringResource(R.string.update_check_failed),
+                stringResource(R.string.update_check_failed_network),
+                stringResource(R.string.confirm)
+            )
+            is UpdateCheckResult.ServerError -> Triple(
+                stringResource(R.string.update_check_failed),
+                stringResource(R.string.update_check_failed_server),
+                stringResource(R.string.confirm)
+            )
+            is UpdateCheckResult.ParseError -> Triple(
+                stringResource(R.string.update_check_failed),
+                stringResource(R.string.update_no_release),
+                stringResource(R.string.confirm)
+            )
+        }
+
+        AlertDialog(
+            onDismissRequest = { showUpdateResult = null },
+            title = {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.headlineSmall
+                )
+            },
+            text = {
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Start
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (result is UpdateCheckResult.UpdateAvailable) {
+                            uriHandler.openUri(result.updateInfo.releaseUrl)
+                        }
+                        showUpdateResult = null
+                    }
+                ) {
+                    Text(confirmText)
+                }
+            },
+            dismissButton = {
+                if (result !is UpdateCheckResult.UpdateAvailable) {
+                    TextButton(onClick = { showUpdateResult = null }) {
+                        Text(stringResource(R.string.cancel))
+                    }
                 }
             }
         )
