@@ -15,13 +15,13 @@ import javazoom.jl.decoder.Bitstream
 import javazoom.jl.decoder.Decoder
 import javazoom.jl.decoder.Header
 import javazoom.jl.decoder.SampleBuffer
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -38,6 +38,7 @@ import java.util.Locale
 import java.util.Random
 import java.util.TimeZone
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.min
 
@@ -66,7 +67,7 @@ class MicrosoftTtsEngine : AbstractTtsEngine() {
 
         private const val DEFAULT_VOICE = "zh-CN-XiaoxiaoNeural"
         private const val MAX_TEXT_LENGTH = 4096
-        private const val PIPE_BUFFER_SIZE = 65536 // 64KB 管道缓冲区
+        private const val PIPE_BUFFER_SIZE = 8192 // 8KB 管道缓冲区，优化首字延迟
 
         private val SUPPORTED_LANGUAGES = arrayOf("zho", "eng", "deu", "ita", "por", "spa", "jpn", "kor", "fra", "rus")
         private val random = Random()
@@ -204,7 +205,11 @@ class MicrosoftTtsEngine : AbstractTtsEngine() {
 
     private var currentWebSocket: WebSocket? = null
 
-    private val client = OkHttpClient()
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(5, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
+        .build()
 
     private var isCancelled = false
 
@@ -253,7 +258,7 @@ class MicrosoftTtsEngine : AbstractTtsEngine() {
                     listener.onSynthesisCompleted()
                 }
             } catch (e: Exception) {
-                if (!isCancelled && e !is kotlinx.coroutines.CancellationException) {
+                if (!isCancelled && e !is CancellationException) {
                     logError("Synthesis error", e)
                     listener.onError("合成失败：${e.message}")
                 }
@@ -342,6 +347,7 @@ class MicrosoftTtsEngine : AbstractTtsEngine() {
                             val headers = parseHeaders(headerData)
                             if (headers["Path"] == "audio" && audioData.isNotEmpty()) {
                                 pipedOutputStream.write(audioData)
+                                pipedOutputStream.flush()
                             }
                         }
                     }
@@ -437,14 +443,11 @@ class MicrosoftTtsEngine : AbstractTtsEngine() {
     private fun decodeMp3Stream(inputStream: PipedInputStream, listener: TtsSynthesisListener) {
         val bitstream = Bitstream(inputStream)
         val decoder = Decoder()
-        var sampleRate = AudioConfig.DEFAULT_SAMPLE_RATE
+        var sampleRate: Int
 
         try {
             while (!isCancelled) {
-                val header: Header? = bitstream.readFrame()
-                if (header == null) {
-                    break
-                }
+                val header: Header = bitstream.readFrame() ?: break
 
                 sampleRate = header.frequency()
 
@@ -570,7 +573,7 @@ class MicrosoftTtsEngine : AbstractTtsEngine() {
     }
 
     override fun isVoiceIdCorrect(voiceId: String?): Boolean {
-        return voiceId != null && voiceId.isNotBlank()
+        return !voiceId.isNullOrBlank()
     }
 
     override fun stop() {

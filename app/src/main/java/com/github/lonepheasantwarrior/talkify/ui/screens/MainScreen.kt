@@ -63,10 +63,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.lonepheasantwarrior.talkify.R
+import com.github.lonepheasantwarrior.talkify.domain.model.MicrosoftTtsConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.Qwen3TtsConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.SeedTts2Config
 import com.github.lonepheasantwarrior.talkify.domain.model.TencentTtsConfig
-import com.github.lonepheasantwarrior.talkify.domain.model.MicrosoftTtsConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.TtsEngineRegistry
 import com.github.lonepheasantwarrior.talkify.domain.repository.AppConfigRepository
 import com.github.lonepheasantwarrior.talkify.domain.repository.EngineConfigRepository
@@ -403,14 +403,14 @@ fun MainScreen(
     }
 
     ConfigBottomSheet(
+        onConfigSaved = {
+            savedConfig = getConfigRepository(currentEngine.id).getConfig(currentEngine.id)
+        },
         isOpen = isConfigSheetOpen,
         onDismiss = { viewModel.closeConfigSheet() },
         currentEngine = currentEngine,
         configRepository = getConfigRepository(currentEngine.id),
-        voiceRepository = getVoiceRepository(currentEngine.id),
-        onConfigSaved = {
-            savedConfig = getConfigRepository(currentEngine.id).getConfig(currentEngine.id)
-        }
+        voiceRepository = getVoiceRepository(currentEngine.id)
     )
 
     // --- 启动流程中的非阻塞弹窗 ---

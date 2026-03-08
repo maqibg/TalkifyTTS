@@ -1,21 +1,21 @@
 package com.github.lonepheasantwarrior.talkify.service.engine
 
 import android.content.Context
-import com.github.lonepheasantwarrior.talkify.service.TtsLogger
 import com.github.lonepheasantwarrior.talkify.domain.repository.EngineConfigRepository
 import com.github.lonepheasantwarrior.talkify.domain.repository.VoiceRepository
+import com.github.lonepheasantwarrior.talkify.infrastructure.engine.repo.MicrosoftTtsConfigRepository
+import com.github.lonepheasantwarrior.talkify.infrastructure.engine.repo.MicrosoftTtsVoiceRepository
 import com.github.lonepheasantwarrior.talkify.infrastructure.engine.repo.Qwen3TtsConfigRepository
 import com.github.lonepheasantwarrior.talkify.infrastructure.engine.repo.Qwen3TtsVoiceRepository
 import com.github.lonepheasantwarrior.talkify.infrastructure.engine.repo.SeedTts2ConfigRepository
 import com.github.lonepheasantwarrior.talkify.infrastructure.engine.repo.SeedTts2VoiceRepository
 import com.github.lonepheasantwarrior.talkify.infrastructure.engine.repo.TencentTtsConfigRepository
 import com.github.lonepheasantwarrior.talkify.infrastructure.engine.repo.TencentTtsVoiceRepository
-import com.github.lonepheasantwarrior.talkify.infrastructure.engine.repo.MicrosoftTtsConfigRepository
-import com.github.lonepheasantwarrior.talkify.infrastructure.engine.repo.MicrosoftTtsVoiceRepository
+import com.github.lonepheasantwarrior.talkify.service.TtsLogger
+import com.github.lonepheasantwarrior.talkify.service.engine.impl.MicrosoftTtsEngine
 import com.github.lonepheasantwarrior.talkify.service.engine.impl.Qwen3TtsEngine
 import com.github.lonepheasantwarrior.talkify.service.engine.impl.SeedTts2Engine
 import com.github.lonepheasantwarrior.talkify.service.engine.impl.TencentTtsEngine
-import com.github.lonepheasantwarrior.talkify.service.engine.impl.MicrosoftTtsEngine
 
 /**
  * TTS 引擎工厂

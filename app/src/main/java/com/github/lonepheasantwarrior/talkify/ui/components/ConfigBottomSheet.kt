@@ -25,10 +25,10 @@ import androidx.compose.ui.unit.dp
 import com.github.lonepheasantwarrior.talkify.R
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseEngineConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.ConfigItem
+import com.github.lonepheasantwarrior.talkify.domain.model.MicrosoftTtsConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.Qwen3TtsConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.SeedTts2Config
 import com.github.lonepheasantwarrior.talkify.domain.model.TencentTtsConfig
-import com.github.lonepheasantwarrior.talkify.domain.model.MicrosoftTtsConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.TtsEngine
 import com.github.lonepheasantwarrior.talkify.domain.repository.EngineConfigRepository
 import com.github.lonepheasantwarrior.talkify.domain.repository.VoiceInfo
@@ -46,24 +46,24 @@ import com.github.lonepheasantwarrior.talkify.service.engine.TtsEngineFactory
  * 使用引擎的 [TtsEngineApi.createDefaultConfig] 方法动态创建正确的配置类型
  * 使用引擎的 [TtsEngineApi.getConfigLabel] 方法获取本地化的配置项标签
  *
+ * @param modifier 修饰符
  * @param isOpen 是否展开弹窗
  * @param onDismiss 关闭弹窗的回调
  * @param currentEngine 当前选中的引擎
  * @param configRepository 配置仓储
  * @param voiceRepository 声音仓储
  * @param onConfigSaved 配置保存后的回调
- * @param modifier 修饰符
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConfigBottomSheet(
+    modifier: Modifier = Modifier,
     isOpen: Boolean,
     onDismiss: () -> Unit,
     currentEngine: TtsEngine,
     configRepository: EngineConfigRepository,
     voiceRepository: VoiceRepository,
-    onConfigSaved: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    onConfigSaved: (() -> Unit)? = null
 ) {
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
@@ -93,19 +93,19 @@ fun ConfigBottomSheet(
         when (defaultConfig) {
             is Qwen3TtsConfig -> {
                 val qwenSaved = savedConfig as? Qwen3TtsConfig
-                if (qwenSaved != null) qwenSaved else defaultConfig
+                qwenSaved ?: defaultConfig
             }
             is SeedTts2Config -> {
                 val seedSaved = savedConfig as? SeedTts2Config
-                if (seedSaved != null) seedSaved else defaultConfig
+                seedSaved ?: defaultConfig
             }
             is TencentTtsConfig -> {
                 val tencentSaved = savedConfig as? TencentTtsConfig
-                if (tencentSaved != null) tencentSaved else defaultConfig
+                tencentSaved ?: defaultConfig
             }
             is MicrosoftTtsConfig -> {
                 val msSaved = savedConfig as? MicrosoftTtsConfig
-                if (msSaved != null) msSaved else defaultConfig
+                msSaved ?: defaultConfig
             }
             else -> defaultConfig
         }
@@ -136,8 +136,6 @@ fun ConfigBottomSheet(
             isVoicesLoading = false
         }
     }
-
-    var isConfigModified by remember { mutableStateOf(false) }
 
     if (isOpen) {
         ModalBottomSheet(
@@ -177,7 +175,6 @@ fun ConfigBottomSheet(
                         configItems = configItems.map {
                             if (it.key == changedItem.key) it.copy(value = newValue) else it
                         }
-                        isConfigModified = true
                     },
                     onSaveClick = {
                         val newConfig = buildConfigFromItems(
@@ -185,7 +182,6 @@ fun ConfigBottomSheet(
                             defaultConfig
                         )
                         configRepository.saveConfig(currentEngine.id, newConfig)
-                        isConfigModified = false
                         onConfigSaved?.invoke()
                         onDismiss()
                     },
@@ -195,7 +191,6 @@ fun ConfigBottomSheet(
                             configItems = configItems.map {
                                 if (it.key == "voice_id") it.copy(value = voice.voiceId) else it
                             }
-                            isConfigModified = true
                         }
                     },
                     modifier = Modifier.fillMaxWidth()

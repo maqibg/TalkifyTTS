@@ -1,8 +1,14 @@
 package com.github.lonepheasantwarrior.talkify.domain.model
 
+import com.github.lonepheasantwarrior.talkify.domain.model.EngineIds.MicrosoftTts.displayName
+import com.github.lonepheasantwarrior.talkify.domain.model.EngineIds.MicrosoftTts.provider
+import com.github.lonepheasantwarrior.talkify.domain.model.EngineIds.MicrosoftTts.value
 import com.github.lonepheasantwarrior.talkify.domain.model.EngineIds.Qwen3Tts.displayName
 import com.github.lonepheasantwarrior.talkify.domain.model.EngineIds.Qwen3Tts.provider
 import com.github.lonepheasantwarrior.talkify.domain.model.EngineIds.Qwen3Tts.value
+import com.github.lonepheasantwarrior.talkify.domain.model.EngineIds.TencentTts.displayName
+import com.github.lonepheasantwarrior.talkify.domain.model.EngineIds.TencentTts.provider
+import com.github.lonepheasantwarrior.talkify.domain.model.EngineIds.TencentTts.value
 
 
 /**
