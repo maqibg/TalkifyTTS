@@ -15,8 +15,8 @@ android {
         applicationId = "com.github.lonepheasantwarrior.talkify"
         minSdk = 30
         targetSdk = 36
-        versionCode = 21
-        versionName = "1.0.19"
+        versionCode = 22
+        versionName = "1.0.20"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
