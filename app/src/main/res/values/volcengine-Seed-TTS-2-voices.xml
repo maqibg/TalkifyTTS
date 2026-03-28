@@ -5,18 +5,38 @@
         <item>zh_female_xiaohe_uranus_bigtts</item>
         <item>zh_male_m191_uranus_bigtts</item>
         <item>zh_male_taocheng_uranus_bigtts</item>
-        <item>zh_female_xueayi_saturn_bigtts</item>
-        <item>zh_male_dayi_saturn_bigtts</item>
-        <item>zh_female_mizai_saturn_bigtts</item>
-        <item>zh_female_jitangnv_saturn_bigtts</item>
-        <item>zh_female_meilinvyou_saturn_bigtts</item>
-        <item>zh_female_santongyongns_saturn_bigtts</item>
-        <item>zh_male_ruyayichen_saturn_bigtts</item>
+        <item>zh_male_liufei_uranus_bigtts</item>
+        <item>zh_male_sophie_uranus_bigtts</item>
+        <item>zh_female_qingxinnvsheng_uranus_bigtts</item>
+        <item>zh_female_cancan_uranus_bigtts</item>
+        <item>zh_female_sajiaoxuemei_uranus_bigtts</item>
+        <item>zh_female_tianmeixiaoyuan_uranus_bigtts</item>
+        <item>zh_female_tianmeitaozi_uranus_bigtts</item>
+        <item>zh_female_shuangkuaisisi_uranus_bigtts</item>
+        <item>zh_female_peiqi_uranus_bigtts</item>
+        <item>zh_female_linjianvhai_uranus_bigtts</item>
+        <item>zh_male_shaonianzixin_uranus_bigtts</item>
+        <item>zh_male_sunwukong_uranus_bigtts</item>
+        <item>zh_female_yingyujiaoxue_uranus_bigtts</item>
+        <item>zh_female_kefunvsheng_uranus_bigtts</item>
+        <item>zh_female_xiaoxue_uranus_bigtts</item>
+        <item>zh_male_dayi_uranus_bigtts</item>
+        <item>zh_female_mizai_uranus_bigtts</item>
+        <item>zh_female_jitangnv_uranus_bigtts</item>
+        <item>zh_female_meilinvyou_uranus_bigtts</item>
+        <item>zh_female_liuchangnv_uranus_bigtts</item>
+        <item>zh_male_ruyayichen_uranus_bigtts</item>
         <item>saturn_zh_female_keainvsheng_tob</item>
         <item>saturn_zh_female_tiaopigongzhu_tob</item>
         <item>saturn_zh_male_shuanglangshaonian_tob</item>
         <item>saturn_zh_male_tiancaitongzhuo_tob</item>
         <item>saturn_zh_female_cancan_tob</item>
+        <item>saturn_zh_female_qingyingduoduo_cs_tob</item>
+        <item>saturn_zh_female_wenwanshanshan_cs_tob</item>
+        <item>saturn_zh_female_reqingaina_cs_tob</item>
+        <item>en_male_tim_uranus_bigtts</item>
+        <item>en_female_dacey_uranus_bigtts</item>
+        <item>en_female_stokie_uranus_bigtts</item>
     </string-array>
 
     <string-array name="volcengine_seed_TTS_2_voices_display_names">
@@ -24,18 +44,38 @@
         <item>小何 2.0</item>
         <item>云舟 2.0</item>
         <item>小天 2.0</item>
-        <item>儿童绘本</item>
-        <item>大壹</item>
-        <item>黑猫侦探社咪</item>
-        <item>鸡汤女</item>
-        <item>魅力女友</item>
-        <item>流畅女声</item>
-        <item>儒雅逸辰</item>
+        <item>刘飞 2.0</item>
+        <item>魅力苏菲 2.0</item>
+        <item>清新女声 2.0</item>
+        <item>知性灿灿 2.0</item>
+        <item>撒娇学妹 2.0</item>
+        <item>甜美小源 2.0</item>
+        <item>甜美桃子 2.0</item>
+        <item>爽快思思 2.0</item>
+        <item>佩奇猪 2.0</item>
+        <item>邻家女孩 2.0</item>
+        <item>少年梓辛/Brayan 2.0</item>
+        <item>猴哥 2.0</item>
+        <item>Tina老师 2.0</item>
+        <item>暖阳女声 2.0</item>
+        <item>儿童绘本 2.0</item>
+        <item>大壹 2.0</item>
+        <item>黑猫侦探社咪仔 2.0</item>
+        <item>鸡汤女 2.0</item>
+        <item>魅力女友 2.0</item>
+        <item>流畅女声 2.0</item>
+        <item>儒雅逸辰 2.0</item>
         <item>可爱女生</item>
         <item>调皮公主</item>
         <item>爽朗少年</item>
         <item>天才同桌</item>
         <item>知性灿灿</item>
+        <item>轻盈朵朵 2.0</item>
+        <item>温婉珊珊 2.0</item>
+        <item>热情艾娜 2.0</item>
+        <item>Tim</item>
+        <item>Dacey</item>
+        <item>Stokie</item>
     </string-array>
 
     <string-array name="volcengine_seed_TTS_2_voices_descriptions">
@@ -43,22 +83,42 @@
         <item>通用场景：支持情感变化、指令遵循、ASMR</item>
         <item>通用场景：支持情感变化、指令遵循、ASMR</item>
         <item>通用场景：支持情感变化、指令遵循、ASMR</item>
-        <item>有声阅读：支持指令遵循</item>
-        <item>视频配音：支持指令遵循</item>
-        <item>视频配音：支持指令遵循</item>
-        <item>视频配音：支持指令遵循</item>
-        <item>视频配音：支持指令遵循</item>
-        <item>视频配音：支持指令遵循</item>
-        <item>视频配音：支持指令遵循</item>
+        <item>通用场景：支持情感变化、指令遵循、ASMR</item>
+        <item>通用场景：支持情感变化、指令遵循、ASMR</item>
+        <item>通用场景：支持情感变化、指令遵循、ASMR</item>
+        <item>角色扮演：支持情感变化、指令遵循、ASMR</item>
+        <item>角色扮演：支持情感变化、指令遵循、ASMR</item>
+        <item>通用场景：支持情感变化、指令遵循、ASMR</item>
+        <item>通用场景：支持情感变化、指令遵循、ASMR</item>
+        <item>通用场景：支持情感变化、指令遵循、ASMR</item>
+        <item>视频配音：支持情感变化、指令遵循、ASMR</item>
+        <item>通用场景：支持情感变化、指令遵循、ASMR</item>
+        <item>通用场景：支持情感变化、指令遵循、ASMR</item>
+        <item>视频配音：支持情感变化、指令遵循、ASMR</item>
+        <item>教育场景：支持情感变化、指令遵循、ASMR</item>
+        <item>客服场景：支持情感变化、指令遵循、ASMR</item>
+        <item>有声阅读：支持情感变化、指令遵循、ASMR</item>
+        <item>视频配音：支持情感变化、指令遵循、ASMR</item>
+        <item>视频配音：支持情感变化、指令遵循、ASMR</item>
+        <item>视频配音：支持情感变化、指令遵循、ASMR</item>
+        <item>通用场景：支持情感变化、指令遵循、ASMR</item>
+        <item>视频配音：支持情感变化、指令遵循、ASMR</item>
+        <item>视频配音：支持情感变化、指令遵循、ASMR</item>
         <item>角色扮演：支持指令遵循、COT/QA功能</item>
         <item>角色扮演：支持指令遵循、COT/QA功能</item>
         <item>角色扮演：支持指令遵循、COT/QA功能</item>
         <item>角色扮演：支持指令遵循、COT/QA功能</item>
         <item>角色扮演：支持指令遵循、COT/QA功能</item>
+        <item>客服场景：支持指令遵循</item>
+        <item>客服场景：支持指令遵循</item>
+        <item>客服场景：支持指令遵循</item>
+        <item>多语种：支持情感变化、指令遵循、ASMR</item>
+        <item>多语种：支持情感变化、指令遵循、ASMR</item>
+        <item>多语种：支持情感变化、指令遵循、ASMR</item>
     </string-array>
 
     <string-array name="volcengine_seed_TTS_2_voices_languages">
-        <item>中文、英语</item>
+        <item>中文、日文、印尼、墨西哥西班牙语</item>
         <item>中文</item>
         <item>中文</item>
         <item>中文</item>
@@ -74,5 +134,25 @@
         <item>中文</item>
         <item>中文</item>
         <item>中文</item>
+        <item>中文、英式英语</item>
+        <item>中文</item>
+        <item>中文</item>
+        <item>中文</item>
+        <item>中文</item>
+        <item>中文</item>
+        <item>中文</item>
+        <item>中文</item>
+        <item>中文</item>
+        <item>中文</item>
+        <item>中文</item>
+        <item>中文</item>
+        <item>中文</item>
+        <item>中文</item>
+        <item>中文</item>
+        <item>中文</item>
+        <item>中文</item>
+        <item>美式英语</item>
+        <item>美式英语</item>
+        <item>美式英语</item>
     </string-array>
 </resources>
