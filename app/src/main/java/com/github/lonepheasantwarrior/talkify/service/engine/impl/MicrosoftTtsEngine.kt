@@ -49,6 +49,7 @@ import kotlin.math.min
  *
  * 继承 [AbstractTtsEngine]，实现 TTS 引擎接口
  * 支持真正的流式音频合成，边接收边播放
+ * 优化点：在单次合成任务中复用单条 WebSocket 连接，消除多段落情况下的重复握手延迟
  * 服务提供商：Azure
  */
 class MicrosoftTtsEngine : AbstractTtsEngine() {
@@ -283,29 +284,62 @@ class MicrosoftTtsEngine : AbstractTtsEngine() {
         config: MicrosoftTtsConfig,
         listener: TtsSynthesisListener
     ) {
-        for ((index, chunk) in chunks.withIndex()) {
-            if (isCancelled) {
-                break
+        val pipeClosed = AtomicBoolean(false)
+        val pipedOutputStream = PipedOutputStream()
+        val pipedInputStream = withContext(Dispatchers.IO) {
+            PipedInputStream(pipedOutputStream, PIPE_BUFFER_SIZE)
+        }
+
+        // 解码是 CPU 密集型操作，调度至 Default
+        // 现在的 DecodeJob 贯穿整个 synthesis 周期，不用为每个 chunk 反复创建
+        val decodeJob = engineScope.launch(Dispatchers.Default) {
+            decodeMp3Stream(pipedInputStream, listener)
+        }
+
+        var webSocket: WebSocket? = null
+
+        try {
+            // 1. 建立全局 WebSocket 连接
+            val wsListener = MicrosoftWebSocketListener(pipedOutputStream, pipeClosed)
+            webSocket = connectWebSocket(wsListener)
+            currentWebSocket = webSocket
+
+            val voice = config.voiceId.ifEmpty { DEFAULT_VOICE }
+            val rate = convertRate(params.speechRate)
+            val volume = convertVolume(params.volume)
+            val pitch = convertPitch(params.pitch)
+
+            // 2. 顺序处理 Chunks
+            for ((index, chunk) in chunks.withIndex()) {
+                if (isCancelled) break
+                logDebug("Processing chunk ${index + 1}/${chunks.size}")
+
+                val chunkDeferred = CompletableDeferred<Result<Unit>>()
+                wsListener.setCurrentChunkDeferred(chunkDeferred)
+
+                sendSsmlMessage(webSocket, voice, rate, volume, pitch, chunk)
+
+                // 等待当前 chunk 返回 Path:turn.end
+                val result = chunkDeferred.await()
+                result.getOrThrow()
             }
-            logDebug("Processing chunk ${index + 1}/${chunks.size}")
-            synthesizeChunk(chunk, params, config, listener)
+        } finally {
+            // 3. 统一资源清理
+            try {
+                withContext(Dispatchers.IO) {
+                    pipedOutputStream.close()
+                }
+            } catch (_: Exception) {}
+            pipeClosed.set(true)
+            webSocket?.close(1000, "Done")
+            currentWebSocket = null
+
+            // 等待音频播放线程安全退出
+            decodeJob.join()
         }
     }
 
-    private suspend fun synthesizeChunk(
-        text: String,
-        params: SynthesisParams,
-        config: MicrosoftTtsConfig,
-        listener: TtsSynthesisListener
-    ) {
-        val chunkResult = CompletableDeferred<Result<Unit>>()
-        val pipeClosed = AtomicBoolean(false)
-
-        val voice = config.voiceId.ifEmpty { DEFAULT_VOICE }
-        val rate = convertRate(params.speechRate)
-        val volume = convertVolume(params.volume)
-        val pitch = convertPitch(params.pitch)
-
+    private suspend fun connectWebSocket(listener: MicrosoftWebSocketListener): WebSocket {
         val connectionId = connectId()
         val url = "$WSS_URL&ConnectionId=$connectionId" +
                 "&Sec-MS-GEC=${generateSecMsGec()}&Sec-MS-GEC-Version=$SEC_MS_GEC_VERSION"
@@ -314,111 +348,115 @@ class MicrosoftTtsEngine : AbstractTtsEngine() {
         getHeadersWithMuid().forEach { (key, value) ->
             requestBuilder.addHeader(key, value)
         }
-        val request = requestBuilder.build()
 
-        val pipedOutputStream = PipedOutputStream()
-        val pipedInputStream = withContext(Dispatchers.IO) {
-            PipedInputStream(pipedOutputStream, PIPE_BUFFER_SIZE)
+        client.newWebSocket(requestBuilder.build(), listener)
+        return listener.awaitConnection()
+    }
+
+    /**
+     * 内部 WebSocket 监听器，负责接管长连接的状态并分发音频流和 Chunk 结束信号
+     */
+    inner class MicrosoftWebSocketListener(
+        private val pipedOutputStream: PipedOutputStream,
+        private val pipeClosed: AtomicBoolean
+    ) : WebSocketListener() {
+
+        private val connectionDeferred = CompletableDeferred<Result<WebSocket>>()
+        private var currentChunkDeferred: CompletableDeferred<Result<Unit>>? = null
+
+        fun setCurrentChunkDeferred(deferred: CompletableDeferred<Result<Unit>>) {
+            currentChunkDeferred = deferred
         }
 
-        // 解码是 CPU 密集型操作，调度至 Default
-        val decodeJob = engineScope.launch(Dispatchers.Default) {
-            decodeMp3Stream(pipedInputStream, listener)
+        suspend fun awaitConnection(): WebSocket {
+            return connectionDeferred.await().getOrThrow()
         }
 
-        currentWebSocket = client.newWebSocket(request, object : WebSocketListener() {
-            override fun onOpen(webSocket: WebSocket, response: Response) {
-                logDebug("WebSocket connected")
-                try {
-                    sendConfigMessage(webSocket)
-                    sendSsmlMessage(webSocket, voice, rate, volume, pitch, text)
-                } catch (e: Exception) {
-                    logError("Error sending messages", e)
-                    try { pipedOutputStream.close() } catch (_: Exception) {}
-                    pipeClosed.set(true)
-                    chunkResult.complete(Result.failure(e))
-                }
+        override fun onOpen(webSocket: WebSocket, response: Response) {
+            logDebug("WebSocket connected")
+            try {
+                sendConfigMessage(webSocket)
+                connectionDeferred.complete(Result.success(webSocket))
+            } catch (e: Exception) {
+                connectionDeferred.complete(Result.failure(e))
             }
+        }
 
-            override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
-                if (pipeClosed.get() || isCancelled) return
-                try {
-                    val buffer = bytes.asByteBuffer()
-                    if (buffer.remaining() >= 2) {
-                        val headerLength = (buffer.get().toInt() and 0xFF) shl 8 or (buffer.get().toInt() and 0xFF)
-                        if (buffer.remaining() >= headerLength) {
-                            val headerBytes = ByteArray(headerLength)
-                            buffer.get(headerBytes)
-                            val headerStr = String(headerBytes, Charsets.UTF_8)
+        override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
+            if (pipeClosed.get() || isCancelled) return
+            try {
+                val buffer = bytes.asByteBuffer()
+                if (buffer.remaining() >= 2) {
+                    val headerLength = (buffer.get().toInt() and 0xFF) shl 8 or (buffer.get().toInt() and 0xFF)
+                    if (buffer.remaining() >= headerLength) {
+                        val headerBytes = ByteArray(headerLength)
+                        buffer.get(headerBytes)
+                        val headerStr = String(headerBytes, Charsets.UTF_8)
 
-                            // 高效比对：避免原方案中创建 String Array 并循环提取 Map 所造成的频繁内存分配开销
-                            if (headerStr.contains("Path:audio") || headerStr.contains("Path: audio")) {
-                                if (buffer.remaining() > 0) {
-                                    val audioData = ByteArray(buffer.remaining())
-                                    buffer.get(audioData)
-                                    pipedOutputStream.write(audioData)
-                                    // 移除了 flush()，让底层流机制自适配批次写入，减少 CPU 唤醒开销
-                                }
+                        if (headerStr.contains("Path:audio") || headerStr.contains("Path: audio")) {
+                            if (buffer.remaining() > 0) {
+                                val audioData = ByteArray(buffer.remaining())
+                                buffer.get(audioData)
+                                pipedOutputStream.write(audioData)
                             }
                         }
                     }
-                } catch (e: Exception) {
-                    if (!pipeClosed.get()) {
-                        pipeClosed.set(true)
-                        logError("Error processing binary message, closing WebSocket", e)
-                        webSocket.close(1000, "Pipe broken or write error")
-                        chunkResult.complete(Result.failure(e))
-                    }
+                }
+            } catch (e: Exception) {
+                handleFailure(webSocket, e)
+            }
+        }
+
+        override fun onMessage(webSocket: WebSocket, text: String) {
+            if (pipeClosed.get() || isCancelled) return
+            try {
+                if (text.contains("Path:turn.end") || text.contains("Path: turn.end")) {
+                    // 通知当前 Chunk 结束，可以继续发送下一个 Chunk 了
+                    currentChunkDeferred?.complete(Result.success(Unit))
+                }
+            } catch (e: Exception) {
+                logError("Error processing text message", e)
+            }
+        }
+
+        override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+            handleCloseOrFailure(code, reason, null)
+        }
+
+        override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+            handleCloseOrFailure(code, reason, null)
+        }
+
+        override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+            handleCloseOrFailure(null, null, t)
+        }
+
+        private fun handleFailure(webSocket: WebSocket, e: Exception) {
+            if (!pipeClosed.get()) {
+                logError("WebSocket error processing message", e)
+                webSocket.close(1000, "Error")
+                handleCloseOrFailure(null, null, e)
+            }
+        }
+
+        private fun handleCloseOrFailure(code: Int?, reason: String?, t: Throwable?) {
+            pipeClosed.set(true)
+            try { pipedOutputStream.close() } catch (_: Exception) {}
+
+            val exception = t ?: Exception("WebSocket closed with code: $code, reason: $reason")
+
+            if (!connectionDeferred.isCompleted) {
+                connectionDeferred.complete(Result.failure(exception))
+            }
+
+            currentChunkDeferred?.let { deferred ->
+                if (!deferred.isCompleted) {
+                    // 如果正常 1000 关闭，且最后一段还没闭合，当做成功处理；否则上抛异常
+                    if (code == 1000) deferred.complete(Result.success(Unit))
+                    else deferred.complete(Result.failure(exception))
                 }
             }
-
-            override fun onMessage(webSocket: WebSocket, text: String) {
-                if (pipeClosed.get() || isCancelled) return
-                try {
-                    // 高效比对，去除正则提取和多余对象的生成
-                    if (text.contains("Path:turn.end") || text.contains("Path: turn.end")) {
-                        try { pipedOutputStream.close() } catch (_: Exception) {}
-                        pipeClosed.set(true)
-                        chunkResult.complete(Result.success(Unit))
-                    }
-                } catch (e: Exception) {
-                    logError("Error processing text message", e)
-                }
-            }
-
-            override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-                try { pipedOutputStream.close() } catch (_: Exception) {}
-                pipeClosed.set(true)
-                if (!chunkResult.isCompleted) {
-                    if (code == 1000) chunkResult.complete(Result.success(Unit))
-                    else chunkResult.complete(Result.failure(Exception("WebSocket error: $code $reason")))
-                }
-            }
-
-            override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-                pipeClosed.set(true)
-                if (!chunkResult.isCompleted) {
-                    if (code == 1000) chunkResult.complete(Result.success(Unit))
-                    else chunkResult.complete(Result.failure(Exception("WebSocket error: $code $reason")))
-                }
-            }
-
-            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                logError("WebSocket error", t)
-                try { pipedOutputStream.close() } catch (_: Exception) {}
-                pipeClosed.set(true)
-                if (!chunkResult.isCompleted) chunkResult.complete(Result.failure(t))
-            }
-        })
-
-        val result = chunkResult.await()
-
-        currentWebSocket?.close(1000, "Done")
-        currentWebSocket = null
-
-        decodeJob.join()
-
-        result.getOrThrow()
+        }
     }
 
     private fun decodeMp3Stream(inputStream: PipedInputStream, listener: TtsSynthesisListener) {
@@ -449,7 +487,8 @@ class MicrosoftTtsEngine : AbstractTtsEngine() {
                 bitstream.closeFrame()
             }
         } catch (e: Exception) {
-            logError("MP3 decoding error", e)
+            // 当我们主动关闭 PipedOutputStream 时，Bitstream 可能会抛出一些可预见的流结束异常，只需记录 Debug 即可
+            logDebug("MP3 decoding finished or interrupted: ${e.message}")
         } finally {
             try { bitstream.close() } catch (_: Exception) {}
             try { inputStream.close() } catch (_: Exception) {}
@@ -484,6 +523,7 @@ class MicrosoftTtsEngine : AbstractTtsEngine() {
         text: String
     ) {
         val ssml = mkssml(voice, rate, volume, pitch, text)
+        // 注意：每次发送 SSML 都需要重新生成一个新的 RequestId 以区分 Turn
         val message = ssmlHeadersPlusData(connectId(), dateToString(), ssml)
         webSocket.send(message)
     }
