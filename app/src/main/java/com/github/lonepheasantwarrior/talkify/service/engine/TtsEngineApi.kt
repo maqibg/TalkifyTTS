@@ -1,5 +1,6 @@
 package com.github.lonepheasantwarrior.talkify.service.engine
 
+import android.media.AudioFormat
 import android.speech.tts.Voice
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseEngineConfig
 
@@ -19,7 +20,7 @@ data class SynthesisParams(
     val pitch: Float = 100.0f,
     val speechRate: Float = 100.0f,
     val volume: Float = 1.0f,
-    val audioFormat: Int = 2,
+    val audioFormat: Int = AudioFormat.ENCODING_PCM_16BIT,
     val language: String? = null
 )
 

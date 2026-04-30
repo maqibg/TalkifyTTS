@@ -118,6 +118,7 @@ fun MainScreen(
     // --- 启动流程状态管理 ---
     val startupState by viewModel.uiState.collectAsState()
     val isDefaultEngine by viewModel.isDefaultEngine.collectAsState()
+    val networkAvailable by viewModel.networkAvailable.collectAsState()
 
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
 
@@ -200,6 +201,8 @@ fun MainScreen(
 
     var availableVoices by remember { mutableStateOf<List<VoiceInfo>>(emptyList()) }
     var selectedVoice by remember { mutableStateOf<VoiceInfo?>(null) }
+    var isVoicesLoading by remember { mutableStateOf(false) }
+    var voiceLoadError by remember { mutableStateOf(false) }
 
     val sampleTexts = stringArrayResource(R.array.texts)
     val defaultInputText = remember(sampleTexts) {
@@ -216,12 +219,22 @@ fun MainScreen(
     val presetRepository = remember { MiMoTokenPlanPresetRepository(context) }
     var savedPresets by remember { mutableStateOf<List<VoicePreset>>(emptyList()) }
     var presetsVersion by remember { mutableStateOf(0) }
+    var presetToDelete by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(currentEngine) {
         savedConfig = getConfigRepository(currentEngine.id).getConfig(currentEngine.id)
-        val voices = getVoiceRepository(currentEngine.id).getVoicesForEngine(currentEngine)
-        availableVoices = voices
-        selectedVoice = availableVoices.find { it.voiceId == savedConfig.voiceId } ?: voices.firstOrNull()
+        isVoicesLoading = true
+        voiceLoadError = false
+        try {
+            val voices = getVoiceRepository(currentEngine.id).getVoicesForEngine(currentEngine)
+            availableVoices = voices
+            selectedVoice = availableVoices.find { it.voiceId == savedConfig.voiceId } ?: voices.firstOrNull()
+        } catch (e: Exception) {
+            voiceLoadError = true
+            availableVoices = emptyList()
+        } finally {
+            isVoicesLoading = false
+        }
         // Load presets for MiMoTokenPlanConfig
         if (currentEngine.id == "mimo-tokenplan-tts") {
             savedPresets = presetRepository.getPresets()
@@ -283,10 +296,8 @@ fun MainScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            val context = LocalContext.current
             val aboutPageOpenedBefore = remember {
-                context.getSharedPreferences("talkify_app_config", Context.MODE_PRIVATE)
-                    .getBoolean("has_opened_about_page", false)
+                viewModel.hasOpenedAboutPage()
             }
             var aboutHintDismissed by remember { mutableStateOf(false) }
 
@@ -297,6 +308,16 @@ fun MainScreen(
             ) {
                 AboutPageHintBanner(
                     onClick = { aboutHintDismissed = true }
+                )
+            }
+
+            AnimatedVisibility(
+                visible = !networkAvailable && startupState == StartupState.Completed,
+                enter = slideInVertically(initialOffsetY = { -it }),
+                exit = slideOutVertically(targetOffsetY = { -it })
+            ) {
+                NetworkWarningBanner(
+                    onRetry = { viewModel.onNetworkRetry() }
                 )
             }
 
@@ -402,15 +423,14 @@ fun MainScreen(
                                                 trailingIcon = {
                                                     IconButton(
                                                         onClick = {
-                                                            presetRepository.deletePreset(preset.name)
-                                                            presetsVersion++
+                                                            presetToDelete = preset.name
                                                         },
-                                                        modifier = Modifier.size(18.dp)
+                                                        modifier = Modifier.size(32.dp)
                                                     ) {
                                                         Icon(
                                                             imageVector = Icons.Default.Delete,
                                                             contentDescription = stringResource(R.string.delete_preset),
-                                                            modifier = Modifier.size(14.dp)
+                                                            modifier = Modifier.size(18.dp)
                                                         )
                                                     }
                                                 }
@@ -553,7 +573,9 @@ fun MainScreen(
                                 viewModel.stopDemo()
                             },
                             modifier = Modifier.fillMaxWidth(),
-                            customVoiceContent = mimoCustomVoiceContent
+                            customVoiceContent = mimoCustomVoiceContent,
+                            isLoading = isVoicesLoading,
+                            loadError = voiceLoadError
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -573,6 +595,29 @@ fun MainScreen(
         configRepository = getConfigRepository(currentEngine.id),
         voiceRepository = getVoiceRepository(currentEngine.id)
     )
+
+    // Preset delete confirmation dialog
+    if (presetToDelete != null) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { presetToDelete = null },
+            title = { Text(stringResource(R.string.preset_delete_confirm_title)) },
+            text = { Text(stringResource(R.string.preset_delete_confirm_message, presetToDelete!!)) },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    presetRepository.deletePreset(presetToDelete!!)
+                    presetsVersion++
+                    presetToDelete = null
+                }) {
+                    Text(stringResource(R.string.confirm), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = { presetToDelete = null }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
 
     // --- 启动流程中的非阻塞弹窗 ---
 
@@ -685,6 +730,53 @@ fun DefaultEngineBanner(
 }
 
 @Composable
+fun NetworkWarningBanner(
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        onClick = onRetry,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer
+        ),
+        shape = MaterialTheme.shapes.large
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Info,
+                contentDescription = null,
+                modifier = Modifier.size(24.dp),
+                tint = MaterialTheme.colorScheme.onErrorContainer
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = stringResource(R.string.network_warning_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = stringResource(R.string.network_warning_content),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
 fun AboutPageHintBanner(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -724,7 +816,7 @@ fun AboutPageHintBanner(
                 Text(
                     text = stringResource(R.string.about_page_hint_banner_content),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
+                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
                 )
             }
         }

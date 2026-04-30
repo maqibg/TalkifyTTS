@@ -14,7 +14,8 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 
 class TalkifyTtsDemoService(
-    private val engineId: String
+    private val engineId: String,
+    private val context: android.content.Context
 ) {
     companion object {
         const val STATE_IDLE = 0
@@ -65,7 +66,7 @@ class TalkifyTtsDemoService(
             engine = TtsEngineFactory.createEngine(engineId)
             if (engine == null) {
                 TtsLogger.e("Failed to create engine: $engineId")
-                onError("无法创建引擎：$engineId")
+                onError(context.getString(com.github.lonepheasantwarrior.talkify.R.string.demo_error_create_engine, engineId))
                 return
             }
             currentEngine = engine
@@ -79,7 +80,7 @@ class TalkifyTtsDemoService(
                 engine.synthesize(text, params, config, createListener())
             } catch (e: Exception) {
                 TtsLogger.e("Synthesis failed: ${e.message}", e)
-                onError("合成失败：${e.message}")
+                onError(context.getString(com.github.lonepheasantwarrior.talkify.R.string.demo_error_synthesis_failed, e.message ?: ""))
             }
         }
     }
@@ -142,7 +143,20 @@ class TalkifyTtsDemoService(
         TtsLogger.d("Stopping playback")
         isStopped.set(true)
         audioPlayer?.stop()
-        stopPlayback()
+        kotlinx.coroutines.runBlocking {
+            try {
+                audioPlayer?.stop()
+                audioPlayer?.release()
+                audioPlayer = null
+            } catch (e: Exception) {
+                TtsLogger.e("Error stopping audio player: ${e.message}", e)
+            }
+            try {
+                currentEngine?.stop()
+            } catch (e: Exception) {
+                TtsLogger.e("Error stopping engine: ${e.message}", e)
+            }
+        }
     }
 
     private fun stopPlayback() {

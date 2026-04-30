@@ -11,7 +11,9 @@ import com.github.lonepheasantwarrior.talkify.service.TtsLogger
 import com.github.lonepheasantwarrior.talkify.service.engine.AbstractTtsEngine
 import com.github.lonepheasantwarrior.talkify.service.engine.AudioConfig
 import com.github.lonepheasantwarrior.talkify.service.engine.SynthesisParams
+import com.github.lonepheasantwarrior.talkify.service.engine.TextChunker
 import com.github.lonepheasantwarrior.talkify.service.engine.TtsSynthesisListener
+import com.github.lonepheasantwarrior.talkify.service.engine.toMaskedSensitive
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -128,7 +130,7 @@ class SeedTts2Engine : AbstractTtsEngine() {
     override fun synthesize(
         text: String, params: SynthesisParams, config: BaseEngineConfig, listener: TtsSynthesisListener
     ) {
-        checkNotReleased()
+        if (!checkNotReleased()) { listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_ENGINE_NOT_CONFIGURED)); return }
 
         val seedConfig = config as? SeedTts2Config
         if (seedConfig == null) {
@@ -163,7 +165,7 @@ class SeedTts2Engine : AbstractTtsEngine() {
         isFirstChunk = true
 
         // 将文本分块处理
-        val textChunks = splitTextIntoChunks(text, MAX_TEXT_LENGTH)
+        val textChunks = TextChunker.splitTextIntoChunks(text, MAX_TEXT_LENGTH)
         if (textChunks.isEmpty()) {
             listener.onError("文本为空")
             return
@@ -442,30 +444,12 @@ class SeedTts2Engine : AbstractTtsEngine() {
 
         // 打印请求详情（Headers 脱敏处理仅用于日志显示，实际发送的是原始值）
         logDebug("HTTP Request URL: ${request.url}")
-        logDebug("HTTP Request Headers (masked for log): ${request.headers.toMaskedString()}")
+        logDebug("HTTP Request Headers (masked for log): ${request.headers.toMaskedSensitive()}")
         logDebug("HTTP Request Body: ${requestBody.toString(2)}")
 
         return request
     }
 
-    /**
-     * 将 Headers 转换为脱敏字符串用于日志
-     */
-    private fun okhttp3.Headers.toMaskedString(): String {
-        val sb = StringBuilder("{")
-        for (i in 0 until this.size) {
-            val name = this.name(i)
-            val value = this.value(i)
-            val maskedValue = when (name.lowercase()) {
-                "x-api-key" -> "${value.take(4)}****${value.takeLast(4)}"
-                else -> value
-            }
-            sb.append("$name=$maskedValue")
-            if (i < this.size - 1) sb.append(", ")
-        }
-        sb.append("}")
-        return sb.toString()
-    }
 
     /**
      * 解析火山引擎错误响应，返回用户友好的错误信息
@@ -545,94 +529,6 @@ class SeedTts2Engine : AbstractTtsEngine() {
             androidVolume >= 1.0f -> 100
             else -> ((androidVolume - 0.5f) / 0.5f * 100f).roundToInt()
         }
-    }
-
-    /**
-     * 将文本分割为块
-     * 参考 Qwen3TtsEngine 的实现
-     */
-    private fun splitTextIntoChunks(text: String, maxLength: Int): List<String> {
-        if (text.isEmpty()) return emptyList()
-        if (text.length <= maxLength) return listOf(text)
-
-        val chunks = mutableListOf<String>()
-        var lastSplitPos = 0
-
-        var i = 0
-        while (i < text.length) {
-            val remainingLength = text.length - lastSplitPos
-
-            if (remainingLength <= maxLength) {
-                chunks.add(text.substring(lastSplitPos))
-                break
-            }
-
-            val isSentenceEnd = checkSentenceEnd(text, i)
-            val isMidPause = checkMidPause(text, i)
-
-            if (isSentenceEnd || isMidPause) {
-                val chunkLength = i - lastSplitPos + 1
-                if (chunkLength <= maxLength) {
-                    chunks.add(text.substring(lastSplitPos, i + 1))
-                    lastSplitPos = i + 1
-                    i++
-                    continue
-                }
-            }
-
-            val splitPos = findBestSplitPos(text, lastSplitPos, maxLength)
-            if (splitPos > lastSplitPos) {
-                chunks.add(text.substring(lastSplitPos, splitPos))
-                lastSplitPos = splitPos
-            } else {
-                chunks.add(text.substring(lastSplitPos, lastSplitPos + maxLength))
-                lastSplitPos += maxLength
-            }
-            i = lastSplitPos
-        }
-
-        return chunks
-    }
-
-    private fun checkSentenceEnd(text: String, index: Int): Boolean {
-        if (index < 0) return false
-        val sentenceEnds = listOf("。", "！", "？", ".", "!", "?")
-        for (ender in sentenceEnds) {
-            if (text.regionMatches(index, ender, 0, ender.length)) {
-                return true
-            }
-        }
-        return false
-    }
-
-    private fun checkMidPause(text: String, index: Int): Boolean {
-        if (index < 0) return false
-        val midPauses = listOf("，", "、", ",", ";", "；", "：", ":")
-        for (pause in midPauses) {
-            if (text.regionMatches(index, pause, 0, pause.length)) {
-                return true
-            }
-        }
-        return false
-    }
-
-    private fun findBestSplitPos(text: String, startPos: Int, maxLength: Int): Int {
-        val searchEnd = minOf(startPos + maxLength, text.length)
-
-        for (i in searchEnd - 1 downTo startPos + 1) {
-            if (checkMidPause(text, i)) {
-                return i + 1
-            }
-        }
-
-        for (i in searchEnd - 1 downTo startPos + 1) {
-            val char = text[i]
-            if (char == ' ' || char == '\n' || char == '\t') {
-                return i + 1
-            }
-        }
-
-        return searchEnd
     }
 
     override fun getSupportedLanguages(): Set<String> {

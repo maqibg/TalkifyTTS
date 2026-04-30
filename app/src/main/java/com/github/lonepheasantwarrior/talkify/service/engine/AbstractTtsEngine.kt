@@ -23,12 +23,15 @@ abstract class AbstractTtsEngine : TtsEngineApi {
         return AudioConfig()
     }
 
-    protected fun checkNotReleased() {
+    /**
+     * @return true if engine is NOT released and ready to use
+     */
+    protected fun checkNotReleased(): Boolean {
         if (isReleased) {
-            val message = "Engine has been released"
-            TtsLogger.e("$tag: $message")
-            throw IllegalStateException(message)
+            TtsLogger.e("$tag: Engine has been released, ignoring call")
+            return false
         }
+        return true
     }
 
     protected fun logDebug(message: String) {

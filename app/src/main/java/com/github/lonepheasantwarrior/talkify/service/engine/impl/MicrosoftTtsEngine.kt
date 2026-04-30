@@ -239,7 +239,7 @@ class MicrosoftTtsEngine : AbstractTtsEngine() {
     override fun synthesize(
         text: String, params: SynthesisParams, config: BaseEngineConfig, listener: TtsSynthesisListener
     ) {
-        checkNotReleased()
+        if (!checkNotReleased()) { listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_ENGINE_NOT_CONFIGURED)); return }
 
         val msConfig = config as? MicrosoftTtsConfig
         if (msConfig == null) {

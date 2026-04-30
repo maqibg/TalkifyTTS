@@ -97,6 +97,7 @@ fun ConfigBottomSheet(
     // File picker for voice clone audio
     var pendingFilePickerKey by remember { mutableStateOf<String?>(null) }
     var filePickerResult by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var filePickerError by remember { mutableStateOf<String?>(null) }
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -112,7 +113,8 @@ fun ConfigBottomSheet(
                     inputStream.close()
                     filePickerResult = pendingFilePickerKey!! to file.absolutePath
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                filePickerError = "文件复制失败: ${e.message}"
             }
             pendingFilePickerKey = null
         }
@@ -198,10 +200,16 @@ fun ConfigBottomSheet(
     }
     var isVoicesLoading by remember { mutableStateOf(false) }
 
+    var voiceLoadError by remember { mutableStateOf(false) }
+
     LaunchedEffect(currentEngine, isOpen) {
         isVoicesLoading = true
+        voiceLoadError = false
         try {
             availableVoices = voiceRepository.getVoicesForEngine(currentEngine)
+        } catch (e: Exception) {
+            voiceLoadError = true
+            availableVoices = emptyList()
         } finally {
             isVoicesLoading = false
         }
@@ -221,6 +229,14 @@ fun ConfigBottomSheet(
             ) {
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // File picker error display
+                filePickerError?.let { error ->
+                    LaunchedEffect(error) {
+                        snackbarHostState.showSnackbar(error)
+                        filePickerError = null
+                    }
+                }
+
                 if (isVoicesLoading) {
                     Column(
                         modifier = Modifier
@@ -235,6 +251,35 @@ fun ConfigBottomSheet(
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                    }
+                } else if (voiceLoadError) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = stringResource(R.string.error_voice_load_failed),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        androidx.compose.material3.TextButton(onClick = {
+                            scope.launch {
+                                voiceLoadError = false
+                                isVoicesLoading = true
+                                try {
+                                    availableVoices = voiceRepository.getVoicesForEngine(currentEngine)
+                                } catch (e: Exception) {
+                                    voiceLoadError = true
+                                } finally {
+                                    isVoicesLoading = false
+                                }
+                            }
+                        }) {
+                            Text(stringResource(R.string.retry))
+                        }
                     }
                 } else {
                     ConfigEditor(
@@ -509,8 +554,8 @@ private fun buildConfigItems(
                 }
             }
 
-            // Pre-generate count - for voicedesign and voiceclone modes
-            if (config.model == "mimo-v2.5-tts-voicedesign" || config.model == "mimo-v2.5-tts-voiceclone") {
+            // Pre-generate count - for all modes
+            run {
                 val pgLabel = getLabel("pre_generate_count")
                 if (pgLabel != null) {
                     items.add(

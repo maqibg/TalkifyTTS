@@ -31,9 +31,13 @@ object ConnectivityMonitor {
 
     private const val TAG = "TalkifyNetwork"
 
-    private const val DEFAULT_TEST_HOST = "www.aliyun.com"
-    private const val DEFAULT_TEST_PORT = 443
     private const val DEFAULT_TIMEOUT_MS = 1000L
+
+    private val TEST_TARGETS = listOf(
+        "connectivitycheck.gstatic.com" to 443,
+        "www.aliyun.com" to 443,
+        "www.msftconnecttest.com" to 443
+    )
 
     data class NetworkStatus(
         val hasNetwork: Boolean,
@@ -129,17 +133,17 @@ object ConnectivityMonitor {
     /**
      * 测试实际网络连接
      *
-     * 尝试建立到外部主机的 TCP 连接
-     * 这是检测 Android 16 "允许网络访问"开关的最可靠方法
+     * 依次尝试连接多个目标，任一成功即判定网络可用
      *
      * @return 是否可以实际建立网络连接
      */
     suspend fun testActualConnection(): Boolean {
-        return testConnection(
-            host = DEFAULT_TEST_HOST,
-            port = DEFAULT_TEST_PORT,
-            timeoutMs = DEFAULT_TIMEOUT_MS
-        )
+        for ((host, port) in TEST_TARGETS) {
+            if (testConnection(host, port, DEFAULT_TIMEOUT_MS)) {
+                return true
+            }
+        }
+        return false
     }
 
     /**
@@ -151,8 +155,8 @@ object ConnectivityMonitor {
      * @return 是否可以建立连接
      */
     suspend fun testConnection(
-        host: String = DEFAULT_TEST_HOST,
-        port: Int = DEFAULT_TEST_PORT,
+        host: String,
+        port: Int,
         timeoutMs: Long = DEFAULT_TIMEOUT_MS
     ): Boolean {
         TtsLogger.d(TAG) { "testConnection: 尝试连接到 $host:$port，超时 ${timeoutMs}ms..." }

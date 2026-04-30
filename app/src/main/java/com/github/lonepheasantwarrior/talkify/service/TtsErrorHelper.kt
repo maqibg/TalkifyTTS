@@ -2,6 +2,7 @@ package com.github.lonepheasantwarrior.talkify.service
 
 import android.content.Context
 import android.widget.Toast
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * TTS 错误处理助手
@@ -11,8 +12,8 @@ import android.widget.Toast
  */
 object TtsErrorHelper {
 
-    private var lastErrorTime = 0L
-    private const val ERROR_COOLDOWN_MS = 3000L
+    private val lastErrorTime = AtomicLong(0L)
+    private const val ERROR_COOLDOWN_MS = 1500L
 
     /**
      * 显示用户友好的错误提示
@@ -22,10 +23,10 @@ object TtsErrorHelper {
      */
     fun showErrorToast(context: Context, errorCode: Int) {
         val currentTime = System.currentTimeMillis()
-        if (currentTime - lastErrorTime < ERROR_COOLDOWN_MS) {
+        if (currentTime - lastErrorTime.get() < ERROR_COOLDOWN_MS) {
             return
         }
-        lastErrorTime = currentTime
+        lastErrorTime.set(currentTime)
 
         val message = TtsErrorCode.getErrorMessage(errorCode)
         Toast.makeText(context, message, Toast.LENGTH_LONG).show()
@@ -40,10 +41,10 @@ object TtsErrorHelper {
      */
     fun showCustomErrorToast(context: Context, message: String) {
         val currentTime = System.currentTimeMillis()
-        if (currentTime - lastErrorTime < ERROR_COOLDOWN_MS) {
+        if (currentTime - lastErrorTime.get() < ERROR_COOLDOWN_MS) {
             return
         }
-        lastErrorTime = currentTime
+        lastErrorTime.set(currentTime)
 
         Toast.makeText(context, message, Toast.LENGTH_LONG).show()
         TtsLogger.e("TTS Custom Error: $message")
@@ -92,10 +93,10 @@ object TtsErrorHelper {
      */
     fun showErrorWithSuggestion(context: Context, errorCode: Int) {
         val currentTime = System.currentTimeMillis()
-        if (currentTime - lastErrorTime < ERROR_COOLDOWN_MS) {
+        if (currentTime - lastErrorTime.get() < ERROR_COOLDOWN_MS) {
             return
         }
-        lastErrorTime = currentTime
+        lastErrorTime.set(currentTime)
 
         val message = TtsErrorCode.getErrorMessage(errorCode)
         val suggestion = TtsErrorCode.getSuggestion(errorCode)

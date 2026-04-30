@@ -79,8 +79,6 @@ class TalkifyTtsService : TextToSpeechService() {
 
     private var appConfigRepository: AppConfigRepository? = null
 
-    private var engineConfigRepository: EngineConfigRepository? = null
-
     private var currentEngine: TtsEngineApi? = null
 
     private var currentEngineId: String? = null
@@ -322,7 +320,7 @@ class TalkifyTtsService : TextToSpeechService() {
             return false
         }
 
-        currentConfig = engineConfigRepository?.getConfig(engineId)
+        currentConfig = getEngineConfigRepository(engineId).getConfig(engineId)
         TtsLogger.d("Engine initialized: ${currentEngine?.getEngineName()}")
         return true
     }
@@ -411,11 +409,11 @@ class TalkifyTtsService : TextToSpeechService() {
                 TtsLogger.d("onLoadLanguage: LANG_COUNTRY_AVAILABLE. lang: $lang, country: $country, variant: $variant")
                 TextToSpeech.LANG_COUNTRY_AVAILABLE
             }else{
-                TtsLogger.w("onIsLanguageAvailable: not support country [${country}]")
+                TtsLogger.w("onLoadLanguage: not support country [${country}]")
                 TextToSpeech.LANG_AVAILABLE
             }
         }
-        TtsLogger.w("onIsLanguageAvailable: not support language [${locale.language}]")
+        TtsLogger.w("onLoadLanguage: not support language [${locale.language}]")
         return TextToSpeech.LANG_NOT_SUPPORTED
     }
 

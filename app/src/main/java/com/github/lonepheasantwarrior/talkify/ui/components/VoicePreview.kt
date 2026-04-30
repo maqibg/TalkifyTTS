@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -46,7 +47,9 @@ fun VoicePreview(
     onPlayClick: () -> Unit,
     onStopClick: () -> Unit,
     modifier: Modifier = Modifier,
-    customVoiceContent: (@Composable () -> Unit)? = null
+    customVoiceContent: (@Composable () -> Unit)? = null,
+    isLoading: Boolean = false,
+    loadError: Boolean = false
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -90,7 +93,30 @@ fun VoicePreview(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                if (availableVoices.isEmpty()) {
+                if (isLoading) {
+                    Row(
+                        modifier = Modifier.padding(vertical = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        androidx.compose.material3.CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.voice_loading),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                } else if (loadError) {
+                    Text(
+                        text = stringResource(R.string.voice_loading_failed),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
+                } else if (availableVoices.isEmpty()) {
                     Text(
                         text = stringResource(R.string.no_voices_available),
                         style = MaterialTheme.typography.bodyMedium,

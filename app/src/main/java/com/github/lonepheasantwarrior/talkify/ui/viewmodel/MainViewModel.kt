@@ -63,6 +63,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _isConfigSheetOpen = MutableStateFlow(false)
     val isConfigSheetOpen: StateFlow<Boolean> = _isConfigSheetOpen.asStateFlow()
 
+    // --- 网络状态 ---
+    private val _networkAvailable = MutableStateFlow(true)
+    val networkAvailable: StateFlow<Boolean> = _networkAvailable.asStateFlow()
+
     // --- Demo 试听状态 ---
     private var demoService: TalkifyTtsDemoService? = null
     private var currentDemoEngineId: String? = null
@@ -104,7 +108,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (demoService == null || currentDemoEngineId != engineId) {
             TtsLogger.d(logTag) { "Initializing Demo Service for engine: $engineId" }
             demoService?.release()
-            demoService = TalkifyTtsDemoService(engineId).apply {
+            demoService = TalkifyTtsDemoService(engineId, context).apply {
                 setStateListener { state, errorMessage ->
                     _isDemoPlaying.value = state == TalkifyTtsDemoService.STATE_PLAYING
                     if (state == TalkifyTtsDemoService.STATE_ERROR) {
@@ -150,13 +154,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             NetworkConnectivityChecker.canAccessInternet(context)
         }
 
+        _networkAvailable.value = canAccess
         if (canAccess) {
             TtsLogger.i(logTag) { "Network accessible." }
-            checkNotificationStep()
         } else {
-            TtsLogger.w(logTag) { "Network unavailable." }
-            _uiState.value = StartupState.NetworkBlocked
+            TtsLogger.w(logTag) { "Network unavailable, continuing with warning." }
         }
+        checkNotificationStep()
     }
 
     // --- 步骤 2: 通知权限 ---
@@ -231,11 +235,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val isDefault = withContext(Dispatchers.IO) {
                 try {
-                    val tts = android.speech.tts.TextToSpeech(context, null)
+                    val initDeferred = kotlinx.coroutines.CompletableDeferred<Int>()
+                    val tts = android.speech.tts.TextToSpeech(context) { status ->
+                        initDeferred.complete(status)
+                    }
+                    val initStatus = initDeferred.await()
                     val engineName = tts.defaultEngine
                     tts.shutdown()
 
-                    TtsLogger.d(logTag) { "Default TTS engine: $engineName" }
+                    TtsLogger.d(logTag) { "Default TTS engine: $engineName (init status: $initStatus)" }
 
                     val talkifyPackageName = "com.github.lonepheasantwarrior.talkify"
                     engineName == talkifyPackageName || engineName?.contains("talkify") == true
@@ -250,6 +258,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // --- 用户交互回调 ---
+
+    fun hasOpenedAboutPage(): Boolean {
+        return appConfigRepository.hasOpenedAboutPage()
+    }
 
     fun onNetworkRetry() {
         startStartupSequence()
