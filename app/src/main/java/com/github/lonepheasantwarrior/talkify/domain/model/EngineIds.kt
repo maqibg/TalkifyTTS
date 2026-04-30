@@ -15,6 +15,9 @@ import com.github.lonepheasantwarrior.talkify.domain.model.EngineIds.XiaoMiMimo.
 import com.github.lonepheasantwarrior.talkify.domain.model.EngineIds.MiniMax.displayName
 import com.github.lonepheasantwarrior.talkify.domain.model.EngineIds.MiniMax.provider
 import com.github.lonepheasantwarrior.talkify.domain.model.EngineIds.MiniMax.value
+import com.github.lonepheasantwarrior.talkify.domain.model.EngineIds.MiMoTokenPlan.displayName
+import com.github.lonepheasantwarrior.talkify.domain.model.EngineIds.MiMoTokenPlan.provider
+import com.github.lonepheasantwarrior.talkify.domain.model.EngineIds.MiMoTokenPlan.value
 
 
 /**
@@ -104,6 +107,19 @@ sealed class EngineIds {
     }
 
     /**
+     * 小米 MiMo Token Plan 语音合成引擎
+     *
+     * @property value 引擎唯一标识符：mimo-tokenplan-tts
+     * @property displayName 显示名称：小米MiMo Token Plan
+     * @property provider 服务提供商：小米
+     */
+    data object MiMoTokenPlan : EngineIds() {
+        override val value: String = "mimo-tokenplan-tts"
+        override val displayName: String = "小米MiMo Token Plan"
+        override val provider: String = "小米"
+    }
+
+    /**
      * 引擎唯一标识符
      */
     abstract val value: String
@@ -123,7 +139,7 @@ sealed class EngineIds {
          * 获取所有定义的引擎 ID 列表
          */
         val entries: List<EngineIds> by lazy {
-            listOf(MicrosoftTts, SeedTts2, TencentTts, Qwen3Tts, XiaoMiMimo, MiniMax)
+            listOf(MicrosoftTts, SeedTts2, TencentTts, Qwen3Tts, XiaoMiMimo, MiniMax, MiMoTokenPlan)
         }
     }
 }

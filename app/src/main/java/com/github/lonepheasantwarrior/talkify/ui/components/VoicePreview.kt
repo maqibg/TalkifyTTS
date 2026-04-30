@@ -45,7 +45,8 @@ fun VoicePreview(
     isPlaying: Boolean,
     onPlayClick: () -> Unit,
     onStopClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    customVoiceContent: (@Composable () -> Unit)? = null
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -78,40 +79,44 @@ fun VoicePreview(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = stringResource(R.string.select_voice),
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            if (availableVoices.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.no_voices_available),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(vertical = 16.dp)
-                )
+            if (customVoiceContent != null) {
+                customVoiceContent()
             } else {
-                val hasGroups = availableVoices.any { it.group != null }
-                if (hasGroups) {
-                    GroupedVoiceList(
-                        voices = availableVoices,
-                        selectedVoice = selectedVoice,
-                        onVoiceSelected = onVoiceSelected
+                Text(
+                    text = stringResource(R.string.select_voice),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                if (availableVoices.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.no_voices_available),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 16.dp)
                     )
                 } else {
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding = PaddingValues(horizontal = 4.dp)
-                    ) {
-                        items(availableVoices) { voice ->
-                            VoiceItem(
-                                voiceInfo = voice,
-                                isSelected = voice.voiceId == selectedVoice?.voiceId,
-                                onClick = { onVoiceSelected(voice) }
-                            )
+                    val hasGroups = availableVoices.any { it.group != null }
+                    if (hasGroups) {
+                        GroupedVoiceList(
+                            voices = availableVoices,
+                            selectedVoice = selectedVoice,
+                            onVoiceSelected = onVoiceSelected
+                        )
+                    } else {
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            contentPadding = PaddingValues(horizontal = 4.dp)
+                        ) {
+                            items(availableVoices) { voice ->
+                                VoiceItem(
+                                    voiceInfo = voice,
+                                    isSelected = voice.voiceId == selectedVoice?.voiceId,
+                                    onClick = { onVoiceSelected(voice) }
+                                )
+                            }
                         }
                     }
                 }

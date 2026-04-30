@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -20,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -121,55 +123,134 @@ private fun ConfigItemEditor(
     onVoiceSelected: (VoiceInfo) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    if (item.isVoiceSelector && availableVoices.isNotEmpty()) {
-        var expanded by remember { mutableStateOf(false) }
-        val selectedVoice = availableVoices.find { it.voiceId == item.value }
+    when {
+        item.isVoiceSelector && availableVoices.isNotEmpty() -> {
+            var expanded by remember { mutableStateOf(false) }
+            val selectedVoice = availableVoices.find { it.voiceId == item.value }
 
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = it },
-            modifier = modifier
-        ) {
-            OutlinedTextField(
-                value = selectedVoice?.displayName ?: stringResource(R.string.voice_select_placeholder),
-                onValueChange = {},
-                readOnly = true,
-                label = { Text(item.label) },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-            )
-
-            ExposedDropdownMenu(
+            ExposedDropdownMenuBox(
                 expanded = expanded,
-                onDismissRequest = { expanded = false }
+                onExpandedChange = { expanded = it },
+                modifier = modifier
             ) {
-                availableVoices.forEach { voice ->
-                    DropdownMenuItem(
-                        text = { Text(voice.displayName) },
-                        onClick = {
-                            onValueChange(voice.voiceId)
-                            onVoiceSelected(voice)
-                            expanded = false
-                        }
-                    )
+                OutlinedTextField(
+                    value = selectedVoice?.displayName ?: stringResource(R.string.voice_select_placeholder),
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text(item.label) },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                )
+
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    availableVoices.forEach { voice ->
+                        DropdownMenuItem(
+                            text = { Text(voice.displayName) },
+                            onClick = {
+                                onValueChange(voice.voiceId)
+                                onVoiceSelected(voice)
+                                expanded = false
+                            }
+                        )
+                    }
                 }
             }
         }
-    } else {
-        OutlinedTextField(
-            value = item.value,
-            onValueChange = onValueChange,
-            label = { Text(item.label) },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            enabled = !item.isVoiceSelector,
-            visualTransformation = if (item.isPassword) {
-                androidx.compose.ui.text.input.PasswordVisualTransformation()
-            } else {
-                androidx.compose.ui.text.input.VisualTransformation.None
+
+        item.isDropdown -> {
+            var expanded by remember { mutableStateOf(false) }
+            val selectedLabel = item.dropdownOptions.find { it.first == item.value }?.second
+                ?: item.value.ifEmpty { stringResource(R.string.voice_select_placeholder) }
+
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = it },
+                modifier = modifier
+            ) {
+                OutlinedTextField(
+                    value = selectedLabel,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text(item.label) },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                )
+
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    item.dropdownOptions.forEach { (value, label) ->
+                        DropdownMenuItem(
+                            text = { Text(label) },
+                            onClick = {
+                                onValueChange(value)
+                                expanded = false
+                            }
+                        )
+                    }
+                }
             }
-        )
+        }
+
+        item.isTextArea -> {
+            OutlinedTextField(
+                value = item.value,
+                onValueChange = onValueChange,
+                label = { Text(item.label) },
+                modifier = Modifier.fillMaxWidth(),
+                maxLines = 5,
+                minLines = 3
+            )
+        }
+
+        item.isFileSelector -> {
+            Row(
+                modifier = modifier.fillMaxWidth(),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
+                OutlinedTextField(
+                    value = if (item.value.isNotEmpty()) {
+                        item.value.substringAfterLast('/').substringAfterLast('\\')
+                    } else {
+                        ""
+                    },
+                    onValueChange = {},
+                    label = { Text(item.label) },
+                    modifier = Modifier.weight(1f),
+                    readOnly = true,
+                    singleLine = true,
+                    enabled = false
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                TextButton(onClick = {
+                    onValueChange("__FILE_PICKER__")
+                }) {
+                    Text(stringResource(R.string.select_file))
+                }
+            }
+        }
+
+        else -> {
+            OutlinedTextField(
+                value = item.value,
+                onValueChange = onValueChange,
+                label = { Text(item.label) },
+                modifier = modifier.fillMaxWidth(),
+                singleLine = true,
+                visualTransformation = if (item.isPassword) {
+                    androidx.compose.ui.text.input.PasswordVisualTransformation()
+                } else {
+                    androidx.compose.ui.text.input.VisualTransformation.None
+                }
+            )
+        }
     }
 }

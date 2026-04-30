@@ -176,4 +176,31 @@
     <string name="system_notification_channel_name">系统通知</string>
     <string name="system_notification_channel_description">系统级的重要通知</string>
     <string name="system_notification_title">系统通知</string>
+
+    <!-- MiMo Token Plan 引擎 -->
+    <string name="model_select_label">模型选择</string>
+    <string name="style_tag_label">风格标签</string>
+    <string name="dialect_label">方言</string>
+    <string name="voice_design_description_label">音色描述</string>
+    <string name="voice_clone_audio_label">音色克隆音频</string>
+    <string name="user_message_label">风格指令</string>
+    <string name="select_file">选择文件</string>
+    <string name="dialect_none">无</string>
+    <string name="style_none">无</string>
+
+    <!-- 音色预设管理 -->
+    <string name="voice_design_label">音色设计</string>
+    <string name="voice_clone_label">音色克隆</string>
+    <string name="save_as_preset">保存为预设</string>
+    <string name="saved_presets">已保存预设</string>
+    <string name="preset_name_hint">预设名称</string>
+    <string name="delete_preset">删除</string>
+    <string name="no_saved_presets">暂无保存的预设</string>
+    <string name="preset_name_empty">请输入预设名称</string>
+    <string name="preset_saved">预设保存成功</string>
+    <string name="preset_deleted">预设已删除</string>
+    <string name="preset_voice_design_format">音色设计：%1$s</string>
+    <string name="preset_voice_clone_format">音色克隆：%1$s</string>
+    <string name="pre_generate_count_label">预生成段数</string>
+    <string name="pre_generate_count_description">提前生成后续段落，减少播放间隔（0=不预生成）</string>
 </resources>

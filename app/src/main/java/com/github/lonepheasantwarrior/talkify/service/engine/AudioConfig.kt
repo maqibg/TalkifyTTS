@@ -84,6 +84,16 @@ data class AudioConfig(
         )
 
         /**
+         * 小米 MiMo Token Plan 语音合成默认配置
+         * 参考小米 MiMo V2.5 TTS API 文档，音频输出格式为 PCM 16bit 24kHz
+         */
+        val MIMO_TOKENPLAN_TTS = AudioConfig(
+            sampleRate = 24000,
+            audioFormat = AudioFormat.ENCODING_PCM_16BIT,
+            channelCount = 1
+        )
+
+        /**
          * 创建标准配置
          *
          * @param sampleRate 采样率

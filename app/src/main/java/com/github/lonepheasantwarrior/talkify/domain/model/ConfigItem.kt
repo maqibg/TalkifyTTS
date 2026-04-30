@@ -5,5 +5,9 @@ data class ConfigItem(
     val label: String,
     val value: String,
     val isPassword: Boolean = false,
-    val isVoiceSelector: Boolean = false
+    val isVoiceSelector: Boolean = false,
+    val isDropdown: Boolean = false,
+    val dropdownOptions: List<Pair<String, String>> = emptyList(),
+    val isTextArea: Boolean = false,
+    val isFileSelector: Boolean = false
 )

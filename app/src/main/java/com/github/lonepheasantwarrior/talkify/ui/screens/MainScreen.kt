@@ -14,6 +14,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,18 +25,23 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.SettingsSuggest
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -58,6 +64,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -65,6 +72,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.lonepheasantwarrior.talkify.R
 import com.github.lonepheasantwarrior.talkify.domain.model.MicrosoftTtsConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.MiniMaxTtsConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.MiMoTokenPlanConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.Qwen3TtsConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.SeedTts2Config
 import com.github.lonepheasantwarrior.talkify.domain.model.TencentTtsConfig
@@ -76,8 +84,10 @@ import com.github.lonepheasantwarrior.talkify.domain.repository.VoiceInfo
 import com.github.lonepheasantwarrior.talkify.domain.repository.VoiceRepository
 import com.github.lonepheasantwarrior.talkify.infrastructure.app.power.PowerOptimizationHelper
 import com.github.lonepheasantwarrior.talkify.infrastructure.app.repo.SharedPreferencesAppConfigRepository
+import com.github.lonepheasantwarrior.talkify.infrastructure.engine.repo.MiMoTokenPlanPresetRepository
 import com.github.lonepheasantwarrior.talkify.infrastructure.engine.repo.Qwen3TtsConfigRepository
 import com.github.lonepheasantwarrior.talkify.infrastructure.engine.repo.Qwen3TtsVoiceRepository
+import com.github.lonepheasantwarrior.talkify.infrastructure.engine.repo.VoicePreset
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
 import com.github.lonepheasantwarrior.talkify.service.engine.TtsEngineFactory
 import com.github.lonepheasantwarrior.talkify.ui.components.BatteryOptimizationDialog
@@ -202,11 +212,29 @@ fun MainScreen(
         mutableStateOf(getConfigRepository(currentEngine.id).getConfig(currentEngine.id))
     }
 
+    // Preset management for MiMoTokenPlanConfig
+    val presetRepository = remember { MiMoTokenPlanPresetRepository(context) }
+    var savedPresets by remember { mutableStateOf<List<VoicePreset>>(emptyList()) }
+    var presetsVersion by remember { mutableStateOf(0) }
+
     LaunchedEffect(currentEngine) {
         savedConfig = getConfigRepository(currentEngine.id).getConfig(currentEngine.id)
         val voices = getVoiceRepository(currentEngine.id).getVoicesForEngine(currentEngine)
         availableVoices = voices
         selectedVoice = availableVoices.find { it.voiceId == savedConfig.voiceId } ?: voices.firstOrNull()
+        // Load presets for MiMoTokenPlanConfig
+        if (currentEngine.id == "mimo-tokenplan-tts") {
+            savedPresets = presetRepository.getPresets()
+        } else {
+            savedPresets = emptyList()
+        }
+    }
+
+    // Refresh presets when version changes (after save/delete)
+    LaunchedEffect(presetsVersion) {
+        if (currentEngine.id == "mimo-tokenplan-tts") {
+            savedPresets = presetRepository.getPresets()
+        }
     }
 
     Scaffold(
@@ -336,6 +364,116 @@ fun MainScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
 
+                        // Preset management for MiMoTokenPlanConfig
+                        if (savedConfig is MiMoTokenPlanConfig && savedPresets.isNotEmpty()) {
+                            val mtpConfig = savedConfig as MiMoTokenPlanConfig
+                            val filteredPresets = savedPresets.filter {
+                                (it.type == "voicedesign" && mtpConfig.model == "mimo-v2.5-tts-voicedesign") ||
+                                (it.type == "voiceclone" && mtpConfig.model == "mimo-v2.5-tts-voiceclone")
+                            }
+                            if (filteredPresets.isNotEmpty()) {
+                                Column {
+                                    Text(
+                                        text = stringResource(R.string.saved_presets),
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    LazyRow(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        contentPadding = PaddingValues(horizontal = 4.dp)
+                                    ) {
+                                        items(filteredPresets) { preset ->
+                                            FilterChip(
+                                                selected = false,
+                                                onClick = {
+                                                    // Apply preset
+                                                    val configRepo = getConfigRepository(currentEngine.id)
+                                                    val currentConfig = configRepo.getConfig(currentEngine.id) as? MiMoTokenPlanConfig ?: return@FilterChip
+                                                    val newConfig = if (preset.type == "voicedesign") {
+                                                        currentConfig.copy(voiceDesignDescription = preset.description)
+                                                    } else {
+                                                        currentConfig.copy(voiceCloneAudioPath = preset.audioPath)
+                                                    }
+                                                    configRepo.saveConfig(currentEngine.id, newConfig)
+                                                    savedConfig = newConfig
+                                                },
+                                                label = { Text(preset.name) },
+                                                trailingIcon = {
+                                                    IconButton(
+                                                        onClick = {
+                                                            presetRepository.deletePreset(preset.name)
+                                                            presetsVersion++
+                                                        },
+                                                        modifier = Modifier.size(18.dp)
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Delete,
+                                                            contentDescription = stringResource(R.string.delete_preset),
+                                                            modifier = Modifier.size(14.dp)
+                                                        )
+                                                    }
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Custom voice content for MiMoTokenPlanConfig non-standard modes
+                        val mimoCustomVoiceContent: (@Composable () -> Unit)? = when {
+                            savedConfig is MiMoTokenPlanConfig -> {
+                                val mtpConfig = savedConfig as MiMoTokenPlanConfig
+                                when (mtpConfig.model) {
+                                    "mimo-v2.5-tts-voicedesign" -> {
+                                        val desc = mtpConfig.voiceDesignDescription
+                                        ({
+                                            Column {
+                                                Text(
+                                                    text = stringResource(R.string.voice_design_label),
+                                                    style = MaterialTheme.typography.titleSmall,
+                                                    color = MaterialTheme.colorScheme.onSurface
+                                                )
+                                                Spacer(modifier = Modifier.height(8.dp))
+                                                Text(
+                                                    text = desc.ifBlank { stringResource(R.string.no_saved_presets) },
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = if (desc.isBlank()) MaterialTheme.colorScheme.onSurfaceVariant
+                                                            else MaterialTheme.colorScheme.onSurface,
+                                                    textAlign = TextAlign.Start,
+                                                    modifier = Modifier.fillMaxWidth()
+                                                )
+                                            }
+                                        })
+                                    }
+                                    "mimo-v2.5-tts-voiceclone" -> {
+                                        val path = mtpConfig.voiceCloneAudioPath
+                                        val fileName = if (path.isNotBlank()) java.io.File(path).name else ""
+                                        ({
+                                            Column {
+                                                Text(
+                                                    text = stringResource(R.string.voice_clone_label),
+                                                    style = MaterialTheme.typography.titleSmall,
+                                                    color = MaterialTheme.colorScheme.onSurface
+                                                )
+                                                Spacer(modifier = Modifier.height(8.dp))
+                                                Text(
+                                                    text = fileName.ifBlank { stringResource(R.string.no_saved_presets) },
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = if (fileName.isBlank()) MaterialTheme.colorScheme.onSurfaceVariant
+                                                            else MaterialTheme.colorScheme.onSurface,
+                                                    modifier = Modifier.fillMaxWidth()
+                                                )
+                                            }
+                                        })
+                                    }
+                                    else -> null // standard mode uses default voice selector
+                                }
+                            }
+                            else -> null
+                        }
+
                         VoicePreview(
                             inputText = inputText,
                             onInputTextChange = { inputText = it },
@@ -376,6 +514,15 @@ fun MainScreen(
                                         val mmConfig = savedConfig as? MiniMaxTtsConfig ?: MiniMaxTtsConfig()
                                         mmConfig.copy(voiceId = selectedVoice?.voiceId ?: mmConfig.voiceId)
                                     }
+                                    is MiMoTokenPlanConfig -> {
+                                        val mtpConfig = savedConfig as? MiMoTokenPlanConfig ?: MiMoTokenPlanConfig()
+                                        // Only copy voiceId for standard mode
+                                        if (mtpConfig.model == "mimo-v2.5-tts") {
+                                            mtpConfig.copy(voiceId = selectedVoice?.voiceId ?: mtpConfig.voiceId)
+                                        } else {
+                                            mtpConfig
+                                        }
+                                    }
                                     else -> savedConfig
                                 }
 
@@ -388,6 +535,7 @@ fun MainScreen(
                                     is MicrosoftTtsConfig -> true
                                     is XiaoMiMimoConfig -> config.apiKey.isNotBlank()
                                     is MiniMaxTtsConfig -> config.apiKey.isNotBlank()
+                                    is MiMoTokenPlanConfig -> config.apiKey.isNotBlank()
                                     else -> false
                                 }
 
@@ -404,7 +552,8 @@ fun MainScreen(
                             onStopClick = {
                                 viewModel.stopDemo()
                             },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            customVoiceContent = mimoCustomVoiceContent
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
