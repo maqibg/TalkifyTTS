@@ -3,6 +3,7 @@ package com.github.lonepheasantwarrior.talkify.service.engine.impl
 import android.speech.tts.Voice
 import com.github.lonepheasantwarrior.talkify.R
 import com.github.lonepheasantwarrior.talkify.TalkifyAppHolder
+import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlParser
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseEngineConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.TencentTtsConfig
 import com.github.lonepheasantwarrior.talkify.service.TtsErrorCode
@@ -101,10 +102,7 @@ class TencentTtsEngine : AbstractTtsEngine() {
         val context = TalkifyAppHolder.getContext()
         return if (context != null) {
             try {
-                val premiumVoices = context.resources.getStringArray(R.array.tencent_premium_tts_voices)
-                val llmVoices = context.resources.getStringArray(R.array.tencent_llm_tts_voices)
-                val naturalVoices = context.resources.getStringArray(R.array.tencent_natural_tts_voices)
-                (premiumVoices + llmVoices + naturalVoices).toList()
+                VoiceXmlParser.parseVoiceIds(context, R.xml.tencent_tts_voices)
             } catch (e: Exception) {
                 TtsLogger.e("Failed to load voice IDs from resource", throwable = e)
                 emptyList()
@@ -117,38 +115,22 @@ class TencentTtsEngine : AbstractTtsEngine() {
 
     private fun loadVoiceSampleRatesFromResource(): MutableMap<String, Int> {
         val context = TalkifyAppHolder.getContext()
-        val map = mutableMapOf<String, Int>()
-        if (context != null) {
+        return if (context != null) {
             try {
-                loadVoiceRatesFromArray(
-                    context.resources.getStringArray(R.array.tencent_premium_tts_voices),
-                    context.resources.getStringArray(R.array.tencent_premium_tts_voice_sample_rates),
-                    map
-                )
-                loadVoiceRatesFromArray(
-                    context.resources.getStringArray(R.array.tencent_llm_tts_voices),
-                    context.resources.getStringArray(R.array.tencent_llm_tts_voice_sample_rates),
-                    map
-                )
-                loadVoiceRatesFromArray(
-                    context.resources.getStringArray(R.array.tencent_natural_tts_voices),
-                    context.resources.getStringArray(R.array.tencent_natural_tts_voice_sample_rates),
-                    map
-                )
+                val entries = VoiceXmlParser.parse(context, R.xml.tencent_tts_voices)
+                val map = mutableMapOf<String, Int>()
+                for (entry in entries) {
+                    val rate = parseSampleRate(entry.sampleRate)
+                    map[entry.id] = rate
+                }
+                map
             } catch (e: Exception) {
                 TtsLogger.e("Failed to load voice sample rates from resource", throwable = e)
+                mutableMapOf()
             }
-        }
-        return map
-    }
-
-    private fun loadVoiceRatesFromArray(
-        voiceIds: Array<String>,
-        sampleRates: Array<String>,
-        map: MutableMap<String, Int>
-    ) {
-        voiceIds.zip(sampleRates).forEach { (voiceId, sampleRateStr) ->
-            map[voiceId] = parseSampleRate(sampleRateStr)
+        } else {
+            TtsLogger.w("Context not available, voice sample rates will be empty")
+            mutableMapOf()
         }
     }
 

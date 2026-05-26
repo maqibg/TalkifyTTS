@@ -4,6 +4,7 @@ import android.speech.tts.Voice
 import android.util.Base64
 import com.github.lonepheasantwarrior.talkify.R
 import com.github.lonepheasantwarrior.talkify.TalkifyAppHolder
+import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlParser
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseEngineConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.XiaoMiMimoConfig
 import com.github.lonepheasantwarrior.talkify.service.TtsErrorCode
@@ -105,7 +106,7 @@ class XiaoMiMimoTtsEngine : AbstractTtsEngine() {
         val context = TalkifyAppHolder.getContext()
         return if (context != null) {
             try {
-                context.resources.getStringArray(R.array.xiaomi_mimo_voices).toList()
+                VoiceXmlParser.parseVoiceIds(context, R.xml.xiaomi_mimo_voices)
             } catch (e: Exception) {
                 TtsLogger.e("Failed to load voice IDs from resource", throwable = e)
                 emptyList()

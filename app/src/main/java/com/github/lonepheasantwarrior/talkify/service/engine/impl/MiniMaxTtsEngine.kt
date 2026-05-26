@@ -3,6 +3,7 @@ package com.github.lonepheasantwarrior.talkify.service.engine.impl
 import android.speech.tts.Voice
 import com.github.lonepheasantwarrior.talkify.R
 import com.github.lonepheasantwarrior.talkify.TalkifyAppHolder
+import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlParser
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseEngineConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.MiniMaxTtsConfig
 import com.github.lonepheasantwarrior.talkify.service.TtsErrorCode
@@ -121,7 +122,7 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
         val context = TalkifyAppHolder.getContext()
         return if (context != null) {
             try {
-                context.resources.getStringArray(R.array.minimax_voices).toList()
+                VoiceXmlParser.parseVoiceIds(context, R.xml.minimax_voices)
             } catch (e: Exception) {
                 TtsLogger.e("Failed to load voice IDs from resource", throwable = e)
                 emptyList()

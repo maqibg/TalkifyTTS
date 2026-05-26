@@ -6,80 +6,29 @@ import com.github.lonepheasantwarrior.talkify.domain.model.EngineIds
 import com.github.lonepheasantwarrior.talkify.domain.model.TtsEngine
 import com.github.lonepheasantwarrior.talkify.domain.repository.VoiceInfo
 import com.github.lonepheasantwarrior.talkify.domain.repository.VoiceRepository
+import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlEntry
+import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlParser
 
-/**
- * MiniMax 语音合成引擎 - 声音仓储实现
- *
- * 负责从应用资源中加载 MiniMax 引擎对应的声音列表
- * 遵循 [VoiceRepository] 接口，便于后续扩展其他引擎服务
- */
 class MiniMaxTtsVoiceRepository(
     private val context: Context
 ) : VoiceRepository {
 
-    private val engineVoiceMap = mapOf(
-        EngineIds.MiniMax.value to VoiceConfig(
-            voiceIdsResId = R.array.minimax_voices,
-            displayNamesResId = R.array.minimax_voices_display_names
-        )
-    )
+    private val voices: List<VoiceXmlEntry> by lazy {
+        VoiceXmlParser.parse(context, R.xml.minimax_voices)
+    }
 
     override suspend fun getVoicesForEngine(engine: TtsEngine): List<VoiceInfo> {
-        val config = engineVoiceMap[engine.id] ?: return emptyList()
-
-        val voiceIds = context.resources.getStringArray(config.voiceIdsResId)
-        val displayNames = context.resources.getStringArray(config.displayNamesResId)
-
-        if (voiceIds.size != displayNames.size) {
-            return emptyList()
-        }
-
-        return voiceIds.mapIndexed { index, voiceId ->
-            VoiceInfo(
-                voiceId = voiceId,
-                displayName = displayNames[index]
-            )
-        }
+        if (engine.id != EngineIds.MiniMax.value) return emptyList()
+        return voices.map { VoiceInfo(voiceId = it.id, displayName = it.displayName) }
     }
 
-    /**
-     * 获取声音详细信息（包含描述）
-     *
-     * @param engine 引擎信息
-     * @return 声音详细信息列表
-     */
     fun getVoicesWithDescription(engine: TtsEngine): List<VoiceInfoWithDescription> {
-        val config = engineVoiceMap[engine.id] ?: return emptyList()
-
-        val voiceIds = context.resources.getStringArray(config.voiceIdsResId)
-        val displayNames = context.resources.getStringArray(config.displayNamesResId)
-        val descriptions = try {
-            context.resources.getStringArray(R.array.minimax_voices_descriptions)
-        } catch (e: Exception) {
-            emptyArray<String>()
-        }
-
-        if (voiceIds.size != displayNames.size) {
-            return emptyList()
-        }
-
-        return voiceIds.mapIndexed { index, voiceId ->
-            VoiceInfoWithDescription(
-                voiceId = voiceId,
-                displayName = displayNames[index],
-                description = descriptions.getOrNull(index) ?: ""
-            )
+        if (engine.id != EngineIds.MiniMax.value) return emptyList()
+        return voices.map {
+            VoiceInfoWithDescription(voiceId = it.id, displayName = it.displayName, description = it.description)
         }
     }
 
-    private data class VoiceConfig(
-        val voiceIdsResId: Int,
-        val displayNamesResId: Int
-    )
-
-    /**
-     * 声音详细信息（含描述）
-     */
     data class VoiceInfoWithDescription(
         val voiceId: String,
         val displayName: String,

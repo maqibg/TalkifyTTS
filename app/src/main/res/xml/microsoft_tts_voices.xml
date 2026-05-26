@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<voices>
+    <voice id="zh-CN-XiaoxiaoNeural" displayName="晓晓" />
+    <voice id="zh-CN-YunxiNeural"    displayName="云希" />
+    <voice id="zh-CN-YunjianNeural"  displayName="云健" />
+    <voice id="zh-CN-XiaoyiNeural"   displayName="小伊" />
+    <voice id="zh-CN-YunyangNeural"  displayName="云扬" />
+    <voice id="zh-CN-XiaochenNeural" displayName="晓辰" />
+    <voice id="zh-CN-XiaohanNeural"  displayName="晓涵" />
+    <voice id="zh-CN-XiaomengNeural" displayName="晓梦" />
+    <voice id="zh-CN-XiaomoNeural"   displayName="晓墨" />
+    <voice id="zh-CN-XiaorouNeural"  displayName="晓柔" />
+    <voice id="zh-CN-XiaoxuanNeural" displayName="晓萱" />
+    <voice id="zh-CN-XiaoyanNeural"  displayName="晓颜" />
+    <voice id="zh-CN-XiaoyouNeural"  displayName="晓悠" />
+    <voice id="zh-CN-YunfanNeural"   displayName="云帆" />
+    <voice id="zh-CN-YunhaoNeural"   displayName="云皓" />
+    <voice id="zh-CN-YunxiNeural"    displayName="云希" />
+    <voice id="zh-CN-YunzeNeural"    displayName="云泽" />
+
+    <voice id="zh-HK-HiuMaanNeural"  displayName="曉曼(粵語)" />
+    <voice id="zh-HK-WanLungNeural"  displayName="雲龍(粵語)" />
+    <voice id="zh-HK-HiuGaaiNeural"  displayName="曉佳(粵語)" />
+
+    <voice id="en-US-AriaNeural"     displayName="Aria (美音)" />
+    <voice id="en-US-GuyNeural"      displayName="Guy (美音)" />
+    <voice id="en-US-DavisNeural"    displayName="Davis (美音)" />
+    <voice id="en-US-SaraNeural"     displayName="Sara (美音)" />
+    <voice id="en-US-TonyNeural"     displayName="Tony (美音)" />
+    <voice id="en-US-JennyNeural"    displayName="Jenny (美音)" />
+
+    <voice id="en-GB-SoniaNeural"    displayName="Sonia (英音)" />
+    <voice id="en-GB-RyanNeural"     displayName="Ryan (英音)" />
+
+    <voice id="ja-JP-NanamiNeural"   displayName="七海 (日语)" />
+    <voice id="ja-JP-KeitaNeural"    displayName="启太 (日语)" />
+    <voice id="ja-JP-AoiNeural"      displayName="葵 (日语)" />
+
+    <voice id="ko-KR-SunHiNeural"    displayName="善熙 (韩语)" />
+    <voice id="ko-KR-InJoonNeural"   displayName="仁俊 (韩语)" />
+    <voice id="ko-KR-JiMinNeural"    displayName="智敏 (韩语)" />
+
+    <voice id="fr-FR-DeniseNeural"   displayName="Denise (法语)" />
+    <voice id="fr-FR-HenriNeural"    displayName="Henri (法语)" />
+
+    <voice id="de-DE-KatjaNeural"    displayName="Katja (德语)" />
+    <voice id="de-DE-ConradNeural"   displayName="Conrad (德语)" />
+
+    <voice id="es-ES-ElviraNeural"   displayName="Elvira (西语)" />
+    <voice id="es-ES-AlvaroNeural"   displayName="Alvaro (西语)" />
+
+    <voice id="it-IT-ElsaNeural"     displayName="Elsa (意语)" />
+    <voice id="it-IT-DiegoNeural"    displayName="Diego (意语)" />
+
+    <voice id="ru-RU-SvetlanaNeural" displayName="Svetlana (俄语)" />
+    <voice id="ru-RU-DmitryNeural"   displayName="Dmitry (俄语)" />
+</voices>

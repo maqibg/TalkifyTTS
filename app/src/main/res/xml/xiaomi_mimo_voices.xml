@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<voices>
+    <voice id="default_zh"   displayName="MiMo-中文女声" description="MiMo-中文女声" />
+    <voice id="default_en"   displayName="MiMo-英文女声" description="MiMo-英文女声" />
+    <voice id="mimo_default" displayName="MiMo-默认"     description="MiMo-默认" />
+</voices>

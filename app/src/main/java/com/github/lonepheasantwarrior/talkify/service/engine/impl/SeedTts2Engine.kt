@@ -4,6 +4,7 @@ import android.speech.tts.Voice
 import android.util.Base64
 import com.github.lonepheasantwarrior.talkify.R
 import com.github.lonepheasantwarrior.talkify.TalkifyAppHolder
+import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlParser
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseEngineConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.SeedTts2Config
 import com.github.lonepheasantwarrior.talkify.service.TtsErrorCode
@@ -101,14 +102,11 @@ class SeedTts2Engine : AbstractTtsEngine() {
         loadVoiceIdsFromResource()
     }
 
-    /**
-     * 从资源文件加载声音ID列表
-     */
     private fun loadVoiceIdsFromResource(): List<String> {
         val context = TalkifyAppHolder.getContext()
         return if (context != null) {
             try {
-                context.resources.getStringArray(R.array.volcengine_seed_TTS_2_voices).toList()
+                VoiceXmlParser.parseVoiceIds(context, R.xml.volcengine_seed_tts2_voices)
             } catch (e: Exception) {
                 TtsLogger.e("Failed to load voice IDs from resource", throwable = e)
                 emptyList()

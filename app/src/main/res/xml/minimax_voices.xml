@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<voices>
+    <voice id="male-qn-qingse"             displayName="青涩青年音色"   description="通用"       language="中文(普通话)" />
+    <voice id="male-qn-jingying"            displayName="精英青年音色"   description="通用"       language="中文(普通话)" />
+    <voice id="male-qn-badao"               displayName="霸道青年音色"   description="通用"       language="中文(普通话)" />
+    <voice id="male-qn-daxuesheng"          displayName="青年大学生音色" description="通用"       language="中文(普通话)" />
+    <voice id="female-shaonv"               displayName="少女音色"       description="通用"       language="中文(普通话)" />
+    <voice id="female-yujie"                displayName="御姐音色"       description="通用"       language="中文(普通话)" />
+    <voice id="female-chengshu"             displayName="成熟女性音色"   description="通用"       language="中文(普通话)" />
+    <voice id="female-tianmei"              displayName="甜美女性音色"   description="通用"       language="中文(普通话)" />
+    <voice id="male-qn-qingse-jingpin"      displayName="青涩青年音色-beta" description="beta版本" language="中文(普通话)" />
+    <voice id="male-qn-jingying-jingpin"    displayName="精英青年音色-beta" description="beta版本" language="中文(普通话)" />
+    <voice id="male-qn-badao-jingpin"       displayName="霸道青年音色-beta" description="beta版本" language="中文(普通话)" />
+    <voice id="male-qn-daxuesheng-jingpin"  displayName="青年大学生音色-beta" description="beta版本" language="中文(普通话)" />
+    <voice id="female-shaonv-jingpin"       displayName="少女音色-beta"    description="beta版本" language="中文(普通话)" />
+    <voice id="female-yujie-jingpin"        displayName="御姐音色-beta"    description="beta版本" language="中文(普通话)" />
+    <voice id="female-chengshu-jingpin"     displayName="成熟女性音色-beta" description="beta版本" language="中文(普通话)" />
+    <voice id="female-tianmei-jingpin"      displayName="甜美女性音色-beta" description="beta版本" language="中文(普通话)" />
+    <voice id="clever_boy"                  displayName="聪明男童"       description="童声"       language="中文(普通话)" />
+    <voice id="cute_boy"                    displayName="可爱男童"       description="童声"       language="中文(普通话)" />
+    <voice id="lovely_girl"                 displayName="萌萌女童"       description="童声"       language="中文(普通话)" />
+    <voice id="cartoon_pig"                 displayName="卡通猪小琪"     description="卡通角色"   language="中文(普通话)" />
+    <voice id="bingjiao_didi"               displayName="病娇弟弟"       description="角色扮演"   language="中文(普通话)" />
+    <voice id="junlang_nanyou"              displayName="俊朗男友"       description="角色扮演"   language="中文(普通话)" />
+    <voice id="chunzhen_xuedi"              displayName="纯真学弟"       description="角色扮演"   language="中文(普通话)" />
+    <voice id="lengdan_xiongzhang"          displayName="冷淡学长"       description="角色扮演"   language="中文(普通话)" />
+    <voice id="badao_shaoye"                displayName="霸道少爷"       description="角色扮演"   language="中文(普通话)" />
+    <voice id="tianxin_xiaoling"            displayName="甜心小玲"       description="角色扮演"   language="中文(普通话)" />
+    <voice id="qiaopi_mengmei"              displayName="俏皮萌妹"       description="角色扮演"   language="中文(普通话)" />
+    <voice id="wumei_yujie"                 displayName="妩媚御姐"       description="角色扮演"   language="中文(普通话)" />
+    <voice id="diadia_xuemei"               displayName="嗲嗲学妹"       description="角色扮演"   language="中文(普通话)" />
+    <voice id="danya_xuejie"                displayName="淡雅学姐"       description="角色扮演"   language="中文(普通话)" />
+    <voice id="Chinese (Mandarin)_Reliable_Executive"      displayName="沉稳高管"     description="职业场景"   language="中文(普通话)" />
+    <voice id="Chinese (Mandarin)_News_Anchor"             displayName="新闻女声"     description="职业场景"   language="中文(普通话)" />
+    <voice id="Chinese (Mandarin)_Mature_Woman"            displayName="傲娇御姐"     description="职业场景"   language="中文(普通话)" />
+    <voice id="Chinese (Mandarin)_Unrestrained_Young_Man"  displayName="不羁青年"     description="职业场景"   language="中文(普通话)" />
+    <voice id="Arrogant_Miss"                              displayName="嚣张小姐"     description="角色扮演"   language="中文(普通话)" />
+    <voice id="Robot_Armor"                                displayName="机械战甲"     description="角色扮演"   language="中文(普通话)" />
+    <voice id="Chinese (Mandarin)_Kind-hearted_Antie"      displayName="热心大婶"     description="职业场景"   language="中文(普通话)" />
+    <voice id="Chinese (Mandarin)_HK_Flight_Attendant"     displayName="港普空姐"     description="方言/口音"  language="中文(普通话)" />
+    <voice id="Chinese (Mandarin)_Humorous_Elder"          displayName="搞笑大爷"     description="职业场景"   language="中文(普通话)" />
+    <voice id="Chinese (Mandarin)_Gentleman"               displayName="温润男声"     description="通用"       language="中文(普通话)" />
+    <voice id="Chinese (Mandarin)_Warm_Bestie"             displayName="温暖闺蜜"     description="角色扮演"   language="中文(普通话)" />
+    <voice id="Chinese (Mandarin)_Male_Announcer"          displayName="播报男声"     description="职业场景"   language="中文(普通话)" />
+    <voice id="Chinese (Mandarin)_Sweet_Lady"              displayName="甜美女声"     description="通用"       language="中文(普通话)" />
+    <voice id="Chinese (Mandarin)_Southern_Young_Man"      displayName="南方小哥"     description="通用"       language="中文(普通话)" />
+    <voice id="Chinese (Mandarin)_Wise_Women"              displayName="阅历姐姐"     description="通用"       language="中文(普通话)" />
+    <voice id="Chinese (Mandarin)_Gentle_Youth"            displayName="温润青年"     description="通用"       language="中文(普通话)" />
+    <voice id="Chinese (Mandarin)_Warm_Girl"               displayName="温暖少女"     description="通用"       language="中文(普通话)" />
+    <voice id="Chinese (Mandarin)_Kind-hearted_Elder"      displayName="花甲奶奶"     description="通用"       language="中文(普通话)" />
+    <voice id="Chinese (Mandarin)_Cute_Spirit"             displayName="憨憨萌兽"     description="职业场景"   language="中文(普通话)" />
+    <voice id="Chinese (Mandarin)_Radio_Host"              displayName="电台男主播"   description="通用"       language="中文(普通话)" />
+    <voice id="Chinese (Mandarin)_Lyrical_Voice"           displayName="抒情男声"     description="通用"       language="中文(普通话)" />
+    <voice id="Chinese (Mandarin)_Straightforward_Boy"     displayName="率真弟弟"     description="通用"       language="中文(普通话)" />
+    <voice id="Chinese (Mandarin)_Sincere_Adult"           displayName="真诚青年"     description="通用"       language="中文(普通话)" />
+    <voice id="Chinese (Mandarin)_Gentle_Senior"           displayName="温柔学姐"     description="角色扮演"   language="中文(普通话)" />
+    <voice id="Chinese (Mandarin)_Stubborn_Friend"         displayName="嘴硬竹马"     description="通用"       language="中文(普通话)" />
+    <voice id="Chinese (Mandarin)_Crisp_Girl"              displayName="清脆少女"     description="通用"       language="中文(普通话)" />
+    <voice id="Chinese (Mandarin)_Pure-hearted_Boy"        displayName="清澈邻家弟弟" description="通用"       language="中文(普通话)" />
+    <voice id="Chinese (Mandarin)_Soft_Girl"               displayName="柔和少女"     description="通用"       language="中文(普通话)" />
+
+    <voice id="Cantonese_ProfessionalHost（F)" displayName="专业女主持(粤语)" description="粤语" language="中文(粤语)" />
+    <voice id="Cantonese_GentleLady"           displayName="温柔女声(粤语)"   description="粤语" language="中文(粤语)" />
+    <voice id="Cantonese_ProfessionalHost（M)" displayName="专业男主持(粤语)" description="粤语" language="中文(粤语)" />
+    <voice id="Cantonese_PlayfulMan"           displayName="活泼男声(粤语)"   description="粤语" language="中文(粤语)" />
+    <voice id="Cantonese_CuteGirl"             displayName="可爱女孩(粤语)"   description="粤语" language="中文(粤语)" />
+    <voice id="Cantonese_KindWoman"            displayName="善良女声(粤语)"   description="粤语" language="中文(粤语)" />
+</voices>
