@@ -281,7 +281,7 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
             if (config.voiceId.isNotEmpty()) {
                 extractRealVoiceName(config.voiceId) ?: config.voiceId
             } else {
-                voiceIds.firstOrNull() ?: "male-qn-qingse"
+                resolveVoiceForLanguage(config.voiceId, params.language)
             }
         }
 
@@ -332,6 +332,13 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
             }
         }
 
+        /**
+         * 处理 WebSocket 的 task_continued 事件
+         *
+         * 解析 JSON 中的 hex 编码 MP3 音频数据，解码后写入管道输出流
+         *
+         * @param json WebSocket 接收到的 JSON 消息
+         */
         private fun handleTaskContinued(json: JSONObject) {
             val baseResp = json.optJSONObject("base_resp")
             if (baseResp != null) {
@@ -401,6 +408,13 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
             completeAllDeferred("连接已关闭")
         }
 
+        /**
+         * 标记所有 Deferred 为已完成并关闭管道
+         *
+         * 在连接异常关闭或出错时统一处理所有异步状态
+         *
+         * @param errorMsg 错误消息
+         */
         private fun completeAllDeferred(errorMsg: String) {
             pipeClosed.set(true)
             try { pipedOutputStream.close() } catch (_: Exception) {}
@@ -416,6 +430,13 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
             }
         }
 
+        /**
+         * 发送 WebSocket 任务启动消息
+         *
+         * 构建 task_start JSON 消息，包含音色设置、音频格式等参数
+         *
+         * @param webSocket 已连接的 WebSocket 实例
+         */
         fun sendTaskStart(webSocket: WebSocket) {
             val speed = convertSpeechRate(params.speechRate)
             val vol = convertVolume(params.volume)
@@ -448,6 +469,14 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
             webSocket.send(message.toString())
         }
 
+        /**
+         * 通过 WebSocket 流式发送文本片段
+         *
+         * 逐个发送 task_continue 消息，最后发送 task_finish 结束信号
+         *
+         * @param webSocket 已连接的 WebSocket 实例
+         * @param chunks 分割后的文本片段列表
+         */
         fun sendTextChunks(webSocket: WebSocket, chunks: List<String>) {
             for ((index, chunk) in chunks.withIndex()) {
                 if (isCancelled || pipeClosed.get()) break
@@ -471,6 +500,14 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
         }
     }
 
+    /**
+     * 将十六进制字符串转换为字节数组
+     *
+     * 用于解码 WebSocket 返回的 hex 编码 MP3 音频数据
+     *
+     * @param hex 十六进制字符串
+     * @return 解码后的字节数组，解码失败时返回空数组
+     */
     private fun hexToBytes(hex: String): ByteArray {
         return try {
             val cleanHex = hex.replace("\\s".toRegex(), "")
@@ -490,6 +527,15 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
         }
     }
 
+    /**
+     * 解码 MP3 流并输出 PCM 音频数据
+     *
+     * 从管道输入流读取 MP3 帧，使用 JLayer 逐帧解码为 PCM，
+     * 并通过 [listener] 回调输出音频数据
+     *
+     * @param inputStream 管道输入流，由 WebSocket 线程写入 MP3 数据
+     * @param listener 音频合成监听器，接收解码后的 PCM 数据
+     */
     private fun decodeMp3Stream(inputStream: PipedInputStream, listener: TtsSynthesisListener) {
         val bitstream = Bitstream(inputStream)
         val decoder = Decoder()
@@ -531,12 +577,33 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
         }
     }
 
+    /**
+     * 将 ShortArray 转换为小端序字节数组
+     *
+     * 解码后的 PCM 样本为 short 数组，需转换为 byte 数组供音频播放器使用
+     *
+     * @param shortArray PCM 样本数组
+     * @param length 有效样本数量
+     * @return 小端序的 16-bit PCM 字节数组
+     */
     private fun shortArrayToByteArray(shortArray: ShortArray, length: Int): ByteArray {
         val buffer = ByteBuffer.allocate(length * 2).order(ByteOrder.LITTLE_ENDIAN)
         buffer.asShortBuffer().put(shortArray, 0, length)
         return buffer.array()
     }
 
+    /**
+     * 根据语言解析对应的默认音色
+     *
+     * 当用户未指定音色时，根据目标语言选取合适的默认音色：
+     * - 中文语言：使用 [male-qn-qingse]
+     * - 英语语言：使用 [English_Graceful_Lady]
+     * - 其他语言：回退到通用默认值
+     *
+     * @param voiceId 用户指定的音色 ID，为空时使用语言匹配的默认值
+     * @param language 目标语言代码（zho/eng 等）
+     * @return 解析后的音色 ID
+     */
     private fun resolveVoiceForLanguage(voiceId: String, language: String?): String {
         if (voiceId.isNotBlank() && voiceIds.contains(voiceId)) {
             return voiceId
@@ -548,30 +615,28 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
         }
     }
 
+    /**
+     * 解析合成参数中的情感设置
+     *
+     * 预留接口，当前返回空字符串表示不设置情感参数
+     *
+     * @param params 合成参数
+     * @return 情感标识字符串，空字符串表示不设置
+     */
     private fun resolveEmotion(params: SynthesisParams): String {
         return ""
     }
 
-    private fun parseError(errorBody: String): String {
-        return try {
-            val json = JSONObject(errorBody)
-            val baseResp = json.optJSONObject("base_resp")
-            if (baseResp != null) {
-                val statusCode = baseResp.optInt("status_code", 0)
-                val statusMsg = baseResp.optString("status_msg", "")
-                if (statusCode != 0) {
-                    return parseMiniMaxError(statusCode, statusMsg)
-                }
-            }
-            json.optString(
-                "message",
-                TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_SYNTHESIS_FAILED)
-            )
-        } catch (_: Exception) {
-            TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_SYNTHESIS_FAILED)
-        }
-    }
 
+    /**
+     * 解析 MiniMax API 错误码为中文错误消息
+     *
+     * 对应 MiniMax WebSocket API 的 base_resp.status_code 错误码表
+     *
+     * @param statusCode API 返回的状态码
+     * @param statusMsg API 返回的状态消息原文
+     * @return 中文错误描述消息
+     */
     private fun parseMiniMaxError(statusCode: Int, statusMsg: String): String {
         return when (statusCode) {
             1000 -> "未知错误: $statusMsg"
@@ -590,6 +655,12 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
         }
     }
 
+    /**
+     * 将 Android TTS 语速（50-200）转换为 MiniMax API 语速（0.5-2.0）
+     *
+     * @param androidRate Android TTS 语速值，范围 0-200
+     * @return MiniMax API 语速值，范围 0.5-2.0
+     */
     private fun convertSpeechRate(androidRate: Float): Float {
         return when {
             androidRate <= 50f -> 0.5f
@@ -598,10 +669,29 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
         }
     }
 
+    /**
+     * 转换音量参数
+     *
+     * Android TTS 音量与 MiniMax API 音量均为 0.0-1.0 范围，直接转发
+     *
+     * @param androidVolume Android TTS 音量值
+     * @return MiniMax API 音量值
+     */
     private fun convertVolume(androidVolume: Float): Float {
         return androidVolume
     }
 
+    /**
+     * 将长文本按句子边界智能分割为多个片段
+     *
+     * 优先在句子结尾标点（。！？.!?）处分割，
+     * 其次在句中停顿标点（，、,;；：:）处分割，
+     * 最后在空格或换行处分割。保证每个片段不超过 [maxLength] 字符
+     *
+     * @param text 待分割的原始文本
+     * @param maxLength 每个片段的最大字符数
+     * @return 分割后的文本片段列表
+     */
     private fun splitTextIntoChunks(text: String, maxLength: Int): List<String> {
         if (text.isEmpty()) return emptyList()
         if (text.length <= maxLength) return listOf(text)
@@ -645,6 +735,13 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
         return chunks
     }
 
+    /**
+     * 检查指定位置是否为句子结尾标点
+     *
+     * @param text 文本内容
+     * @param index 待检查的字符位置
+     * @return 是否为句子结尾标点
+     */
     private fun checkSentenceEnd(text: String, index: Int): Boolean {
         if (index < 0) return false
         val sentenceEnds = listOf("。", "！", "？", ".", "!", "?")
@@ -656,6 +753,13 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
         return false
     }
 
+    /**
+     * 检查指定位置是否为句中停顿标点
+     *
+     * @param text 文本内容
+     * @param index 待检查的字符位置
+     * @return 是否为句中停顿标点
+     */
     private fun checkMidPause(text: String, index: Int): Boolean {
         if (index < 0) return false
         val midPauses = listOf("，", "、", ",", ";", "；", "：", ":")
@@ -667,6 +771,17 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
         return false
     }
 
+    /**
+     * 在最大长度范围内寻找最佳分割位置
+     *
+     * 向后搜索，优先在停顿标点处分割，其次在空白字符处分割。
+     * 无法找到合适位置时返回最大长度位置
+     *
+     * @param text 文本内容
+     * @param startPos 搜索起始位置
+     * @param maxLength 最大片段长度
+     * @return 最佳分割位置的索引
+     */
     private fun findBestSplitPos(text: String, startPos: Int, maxLength: Int): Int {
         val searchEnd = minOf(startPos + maxLength, text.length)
 
@@ -686,14 +801,31 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
         return searchEnd
     }
 
+    /**
+     * 获取引擎支持的语言代码集合
+     *
+     * @return 支持的语言代码集合（zho, eng）
+     */
     override fun getSupportedLanguages(): Set<String> {
         return SUPPORTED_LANGUAGES.toSet()
     }
 
+    /**
+     * 获取默认语言设置
+     *
+     * @return 默认使用简体中文
+     */
     override fun getDefaultLanguages(): Array<String> {
         return arrayOf(Locale.SIMPLIFIED_CHINESE.language, Locale.SIMPLIFIED_CHINESE.country, "")
     }
 
+    /**
+     * 获取所有支持的声音列表
+     *
+     * 对每种支持的语言组合所有音色 ID，生成 Voice 对象列表
+     *
+     * @return 可用于 TTS 系统的 Voice 列表
+     */
     override fun getSupportedVoices(): List<Voice> {
         val voices = mutableListOf<Voice>()
 
@@ -714,6 +846,17 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
         return voices
     }
 
+    /**
+     * 获取默认声音 ID
+     *
+     * 当用户未指定音色时，返回内置默认音色；否则返回用户选择的音色
+     *
+     * @param lang 语言代码
+     * @param country 国家代码
+     * @param variant 变体代码
+     * @param currentVoiceId 用户当前选择的声音 ID
+     * @return 带语言标记的声音完整名称
+     */
     override fun getDefaultVoiceId(
         lang: String?,
         country: String?,
@@ -727,6 +870,14 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
         return "$defaultVoice$VOICE_NAME_SEPARATOR$lang"
     }
 
+    /**
+     * 验证声音 ID 是否有效
+     *
+     * 提取真实音色名称后检查是否在支持列表中
+     *
+     * @param voiceId 格式为 "voiceName::langCode" 的声音 ID
+     * @return true 表示声音 ID 有效
+     */
     override fun isVoiceIdCorrect(voiceId: String?): Boolean {
         if (voiceId == null) {
             return false
@@ -735,6 +886,14 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
         return realVoiceName != null && voiceIds.contains(realVoiceName)
     }
 
+    /**
+     * 从复合声音名称中提取真实音色 ID
+     *
+     * 声音名称格式为 "voiceName::langCode"，此函数提取 voiceName 部分
+     *
+     * @param androidVoiceName 格式为 "voiceName::langCode" 的完整声音名称
+     * @return 纯音色 ID，不含语言信息
+     */
     private fun extractRealVoiceName(androidVoiceName: String?): String? {
         if (androidVoiceName == null) return null
         return if (androidVoiceName.contains(VOICE_NAME_SEPARATOR)) {
@@ -744,6 +903,11 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
         }
     }
 
+    /**
+     * 停止当前语音合成
+     *
+     * 关闭 WebSocket 连接并取消合成协程
+     */
     override fun stop() {
         logInfo("Stopping synthesis")
         isCancelled = true
@@ -754,6 +918,11 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
         hasCompleted = false
     }
 
+    /**
+     * 释放引擎资源
+     *
+     * 关闭 WebSocket 连接、取消协程并释放底层资源
+     */
     override fun release() {
         logInfo("Releasing engine")
         isCancelled = true
@@ -765,6 +934,14 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
         super.release()
     }
 
+    /**
+     * 检查引擎是否已完成配置
+     *
+     * 验证 API Key 是否已填写
+     *
+     * @param config 引擎配置对象
+     * @return true 表示已配置
+     */
     override fun isConfigured(config: BaseEngineConfig?): Boolean {
         val miniMaxConfig = config as? MiniMaxTtsConfig
         var result = false
@@ -775,10 +952,22 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
         return result
     }
 
+    /**
+     * 创建默认引擎配置
+     *
+     * @return 默认的 [MiniMaxTtsConfig] 实例
+     */
     override fun createDefaultConfig(): BaseEngineConfig {
         return MiniMaxTtsConfig()
     }
 
+    /**
+     * 获取配置项的中文标签
+     *
+     * @param configKey 配置项键名
+     * @param context Android 上下文
+     * @return 配置项的中文标签，不支持则返回 null
+     */
     override fun getConfigLabel(configKey: String, context: android.content.Context): String? {
         return when (configKey) {
             "api_key" -> context.getString(R.string.api_key_label)
