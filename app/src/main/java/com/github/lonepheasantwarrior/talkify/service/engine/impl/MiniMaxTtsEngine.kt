@@ -56,7 +56,7 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
         const val ENGINE_NAME = "MiniMax语音合成"
         private const val VOICE_NAME_SEPARATOR = "::"
         private const val WSS_URL = "wss://api.minimaxi.com/ws/v1/t2a_v2"
-        private const val DEFAULT_MODEL = "speech-2.8-hd"
+        private const val DEFAULT_MODEL = "speech-2.8-turbo"
 
         private const val MAX_TEXT_LENGTH = 10000
 
@@ -72,7 +72,6 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(0, TimeUnit.MILLISECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
-        .pingInterval(30, TimeUnit.SECONDS)
         .build()
 
     @Volatile
