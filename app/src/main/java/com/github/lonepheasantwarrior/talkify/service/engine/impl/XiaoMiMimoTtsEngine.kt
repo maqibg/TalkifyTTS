@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit
  *
  * 引擎 ID：xiaomi-mimo-tts
  * 服务提供商：小米
- * API 文档：https://platform.xiaomimimo.com/docs/zh-CN/usage-guide/speech-synthesis-v2.5
+ * API 文档：https://platform.xiaomimimo.com/docs/zh-CN/usage-guide/speech-synthesis
  */
 class XiaoMiMimoTtsEngine : AbstractTtsEngine() {
 
@@ -50,7 +50,7 @@ class XiaoMiMimoTtsEngine : AbstractTtsEngine() {
         const val ENGINE_NAME = "小米MiMo语音合成"
         private const val VOICE_NAME_SEPARATOR = "::"
         private const val API_URL = "https://api.xiaomimimo.com/v1/chat/completions"
-        private const val MODEL_NAME = "mimo-v2.5-tts"
+        private const val MODEL_NAME = "mimo-v2-tts"
 
         // 文本分块配置
         private const val MAX_TEXT_LENGTH = 300
