@@ -53,7 +53,7 @@ class XiaoMiMimoTtsEngine : AbstractTtsEngine() {
         private const val MODEL_NAME = "mimo-v2-tts"
 
         // 文本分块配置
-        private const val MAX_TEXT_LENGTH = 300
+        private const val MAX_TEXT_LENGTH = 768
 
         // OkHttp 连接池配置（复用连接，空闲超时 45 秒）
         private val connectionPool = ConnectionPool(5, 45, TimeUnit.SECONDS)
@@ -106,7 +106,7 @@ class XiaoMiMimoTtsEngine : AbstractTtsEngine() {
         val context = TalkifyAppHolder.getContext()
         return if (context != null) {
             try {
-                VoiceXmlParser.parseVoiceIds(context, R.xml.xiaomi_mimo_voices)
+                VoiceXmlParser.parseVoiceIds(context, R.xml.xiaomi_mimo_voices_v2p5)
             } catch (e: Exception) {
                 TtsLogger.e("Failed to load voice IDs from resource", throwable = e)
                 emptyList()
