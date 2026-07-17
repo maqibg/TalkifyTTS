@@ -13,8 +13,9 @@
 
     <!-- 主界面 -->
     <string name="app_subtitle">AI 语音合成</string>
-    <string name="synthesis_provider">合成供应商</string>
-    <string name="select_provider">选择合成供应商</string>
+
+    <string name="current_model">当前模型</string>
+    <string name="select_provider">选择供应商</string>
     <string name="provider_format">提供商: %1$s</string>
     <string name="default_text">书和株植一样，简单，不贵，却让人觉得身心舒畅，生活踏实。</string>
     <string name="checking_network">正在检查网络连接…</string>
@@ -73,7 +74,7 @@
     <string name="cd_play_button">播放语音</string>
     <string name="cd_stop_button">停止播放</string>
     <string name="cd_settings_button">打开设置</string>
-    <string name="cd_provider_selector">选择合成供应商</string>
+    <string name="cd_provider_selector">选择供应商</string>
 
     <!-- 权限检查 -->
     <string name="permission_required_title">权限请求</string>
@@ -137,7 +138,7 @@
     <string name="about_version_format">版本 %1$s</string>
     <string name="about_github">开源仓库</string>
     <string name="about_github_url">https://github.com/LonePheasantWarrior/TalkifyTTS</string>
-    <string name="about_description">一款基于 Android 的现代化 TTS 供应商应用，连接云端大模型的高质量语音合成能力</string>
+    <string name="about_description">一款基于 Android 的现代化 TTS 引擎应用，连接云端大模型的高质量语音合成能力</string>
     <string name="about_qq_group">QQ群</string>
     <string name="about_qq_group_number">1087849270</string>
     <string name="about_qq_group_note">仅限技术交流，禁止商业推广</string>

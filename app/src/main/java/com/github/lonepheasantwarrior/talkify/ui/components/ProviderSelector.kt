@@ -49,7 +49,7 @@ fun ProviderSelector(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = stringResource(R.string.synthesis_provider),
+                text = stringResource(R.string.current_model),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -61,14 +61,14 @@ fun ProviderSelector(
                     .padding(top = 8.dp)
             ) {
                 Text(
-                    text = currentProvider.name,
+                    text = currentProvider.provider,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
 
             Text(
-                text = stringResource(R.string.provider_format, currentProvider.provider),
+                text = stringResource(R.string.provider_format, currentProvider.name),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp)
