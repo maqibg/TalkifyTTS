@@ -16,9 +16,9 @@ class TalkifySampleTextActivity : Activity() {
 
         // 2. 根据语言准备示例文本
         val sampleText = when (language) {
-            "zho" -> "这是 Talkify 引擎的合成示例。"
-            "eng" -> "This is a Talkify Engine synthesis example."
-            else -> "Welcome to use Talkify Text to Speech engine."
+            "zho" -> "这是 Talkify 供应商的合成示例。"
+            "eng" -> "This is a Talkify provider synthesis example."
+            else -> "Welcome to use Talkify Text to Speech provider."
         }
 
         val resultIntent = Intent()

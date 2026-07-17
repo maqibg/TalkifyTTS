@@ -4,30 +4,30 @@ package com.github.lonepheasantwarrior.talkify.domain.repository
  * 应用配置仓储接口
  *
  * 定义应用级全局配置的存取方法
- * 与引擎配置分离，存储应用级别的全局状态
+ * 与供应商配置分离，存储应用级别的全局状态
  */
 interface AppConfigRepository {
     /**
-     * 获取用户上次选择的引擎 ID
+     * 获取用户上次选择的供应商 ID
      *
-     * 用于应用启动时恢复用户选择的引擎
-     * @return 引擎 ID，未选择时返回 null
+     * 用于应用启动时恢复用户选择的供应商
+     * @return 供应商 ID，未选择时返回 null
      */
-    fun getSelectedEngineId(): String?
+    fun getSelectedProviderId(): String?
 
     /**
-     * 保存用户选择的引擎 ID
+     * 保存用户选择的供应商 ID
      *
-     * @param engineId 引擎 ID
+     * @param providerId 供应商 ID
      */
-    fun saveSelectedEngineId(engineId: String)
+    fun saveSelectedProviderId(providerId: String)
 
     /**
-     * 检查是否已选择过引擎
+     * 检查是否已选择过供应商
      *
-     * @return 是否已选择过引擎
+     * @return 是否已选择过供应商
      */
-    fun hasSelectedEngine(): Boolean
+    fun hasSelectedProvider(): Boolean
 
     /**
      * 检查是否已经请求过通知权限

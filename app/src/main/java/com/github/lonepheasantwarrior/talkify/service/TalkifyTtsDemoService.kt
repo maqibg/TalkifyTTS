@@ -1,10 +1,10 @@
 package com.github.lonepheasantwarrior.talkify.service
 
-import com.github.lonepheasantwarrior.talkify.domain.model.BaseEngineConfig
-import com.github.lonepheasantwarrior.talkify.service.engine.SynthesisParams
-import com.github.lonepheasantwarrior.talkify.service.engine.TtsEngineApi
-import com.github.lonepheasantwarrior.talkify.service.engine.TtsEngineFactory
-import com.github.lonepheasantwarrior.talkify.service.engine.TtsSynthesisListener
+import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
+import com.github.lonepheasantwarrior.talkify.service.provider.SynthesisParams
+import com.github.lonepheasantwarrior.talkify.service.provider.TtsProviderApi
+import com.github.lonepheasantwarrior.talkify.service.provider.TtsProviderFactory
+import com.github.lonepheasantwarrior.talkify.service.provider.TtsSynthesisListener
 import com.github.lonepheasantwarrior.talkify.util.TalkifyAudioPlayer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 
 class TalkifyTtsDemoService(
-    private val engineId: String
+    private val providerId: String
 ) {
     companion object {
         const val STATE_IDLE = 0
@@ -26,7 +26,7 @@ class TalkifyTtsDemoService(
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     @Volatile
-    private var currentEngine: TtsEngineApi? = null
+    private var currentProvider: TtsProviderApi? = null
 
     @Volatile
     private var audioPlayer: TalkifyAudioPlayer? = null
@@ -48,7 +48,7 @@ class TalkifyTtsDemoService(
 
     fun speak(
         text: String,
-        config: BaseEngineConfig,
+        config: BaseProviderConfig,
         params: SynthesisParams = SynthesisParams(language = "Auto")
     ) {
         if (currentState == STATE_PLAYING) {
@@ -60,15 +60,15 @@ class TalkifyTtsDemoService(
         lastErrorMessage = null
         notifyStateChange()
 
-        var engine = currentEngine
-        if (engine == null) {
-            engine = TtsEngineFactory.createEngine(engineId)
-            if (engine == null) {
-                TtsLogger.e("Failed to create engine: $engineId")
-                onError("无法创建引擎：$engineId")
+        var provider = currentProvider
+        if (provider == null) {
+            provider = TtsProviderFactory.createProvider(providerId)
+            if (provider == null) {
+                TtsLogger.e("Failed to create provider: $providerId")
+                onError("无法创建供应商：$providerId")
                 return
             }
-            currentEngine = engine
+            currentProvider = provider
         }
 
         currentState = STATE_PLAYING
@@ -76,7 +76,7 @@ class TalkifyTtsDemoService(
 
         serviceScope.launch {
             try {
-                engine.synthesize(text, params, config, createListener())
+                provider.synthesize(text, params, config, createListener())
             } catch (e: Exception) {
                 TtsLogger.e("Synthesis failed: ${e.message}", e)
                 onError("合成失败：${e.message}")
@@ -156,9 +156,9 @@ class TalkifyTtsDemoService(
             }
 
             try {
-                currentEngine?.stop()
+                currentProvider?.stop()
             } catch (e: Exception) {
-                TtsLogger.e("Error stopping engine: ${e.message}", e)
+                TtsLogger.e("Error stopping provider: ${e.message}", e)
             }
 
             if (currentState != STATE_STOPPED) {
@@ -186,11 +186,11 @@ class TalkifyTtsDemoService(
         TtsLogger.d("Releasing service")
         stop()
         try {
-            currentEngine?.release()
+            currentProvider?.release()
         } catch (e: Exception) {
-            TtsLogger.e("Error releasing engine: ${e.message}", e)
+            TtsLogger.e("Error releasing provider: ${e.message}", e)
         }
-        currentEngine = null
+        currentProvider = null
         serviceScope.cancel()
         currentState = STATE_IDLE
         lastErrorMessage = null

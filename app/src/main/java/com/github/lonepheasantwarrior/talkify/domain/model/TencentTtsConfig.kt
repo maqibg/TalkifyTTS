@@ -1,9 +1,9 @@
 package com.github.lonepheasantwarrior.talkify.domain.model
 
 /**
- * 腾讯语音合成引擎配置
+ * 腾讯语音合成供应商配置
  *
- * 继承 [BaseEngineConfig]，封装腾讯云语音合成引擎所需的配置信息
+ * 继承 [BaseProviderConfig]，封装腾讯云语音合成供应商所需的配置信息
  * 包含腾讯云服务的 AppID、SecretID、SecretKey 和语音模型配置
  *
  * 配置项说明：
@@ -37,4 +37,4 @@ data class TencentTtsConfig(
     val appId: String = "",
     val secretId: String = "",
     val secretKey: String = ""
-) : BaseEngineConfig(voiceId)
+) : BaseProviderConfig(voiceId)

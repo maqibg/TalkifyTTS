@@ -1,9 +1,9 @@
 package com.github.lonepheasantwarrior.talkify.domain.model
 
 /**
- * 通义千问3语音合成引擎配置
+ * 通义千问3语音合成供应商配置
  *
- * 继承 [BaseEngineConfig]，封装通义千问3引擎所需的配置信息
+ * 继承 [BaseProviderConfig]，封装通义千问3供应商所需的配置信息
  * 包含阿里云百炼服务的 API Key 和语音模型配置
  *
  * 配置项说明：
@@ -27,4 +27,4 @@ package com.github.lonepheasantwarrior.talkify.domain.model
 data class Qwen3TtsConfig(
     override val voiceId: String = "",
     val apiKey: String = ""
-) : BaseEngineConfig(voiceId)
+) : BaseProviderConfig(voiceId)

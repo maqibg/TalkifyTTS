@@ -13,8 +13,8 @@
 
     <!-- 主界面 -->
     <string name="app_subtitle">AI 语音合成</string>
-    <string name="synthesis_engine">合成引擎</string>
-    <string name="select_engine">选择合成引擎</string>
+    <string name="synthesis_provider">合成供应商</string>
+    <string name="select_provider">选择合成供应商</string>
     <string name="provider_format">提供商: %1$s</string>
     <string name="default_text">书和株植一样，简单，不贵，却让人觉得身心舒畅，生活踏实。</string>
     <string name="checking_network">正在检查网络连接…</string>
@@ -52,19 +52,19 @@
     <string name="error_empty_api_key">API Key 不能为空</string>
 
     <!-- TTS 服务错误 -->
-    <string name="tts_error_no_engine">未找到可用的 TTS 引擎</string>
-    <string name="tts_error_engine_not_found">引擎不存在</string>
-    <string name="tts_error_engine_not_configured">合成引擎未配置</string>
+    <string name="tts_error_no_provider">未找到可用的 TTS 供应商</string>
+    <string name="tts_error_provider_not_found">供应商不存在</string>
+    <string name="tts_error_provider_not_configured">合成供应商未配置</string>
     <string name="tts_error_config_not_ready">请完成Talkify参数设置</string>
-    <string name="tts_error_no_engine_id_available">合成引擎未选择</string>
-    <string name="tts_error_engine_not_ready">合成引擎未初始化</string>
+    <string name="tts_error_no_provider_id_available">合成供应商未选择</string>
+    <string name="tts_error_provider_not_ready">合成供应商未初始化</string>
     <string name="tts_error_synthesis_failed">语音合成失败</string>
     <string name="tts_error_network_unavailable">网络不可用，请检查网络连接</string>
     <string name="tts_error_invalid_request">无效的合成请求</string>
-    <string name="tts_error_engine_init_failed">引擎初始化失败</string>
+    <string name="tts_error_provider_init_failed">供应商初始化失败</string>
     <string name="tts_error_no_config_available">未找有效配置</string>
     <string name="tts_error_unknown">发生未知错误</string>
-    <string name="tts_error_not_implemented">该引擎功能尚未实现</string>
+    <string name="tts_error_not_implemented">该供应商功能尚未实现</string>
     <string name="tts_config_suggestion">请前往应用设置页面配置 API Key</string>
     <string name="tts_error_init_failed">应用初始化失败，请重启应用</string>
     <string name="tts_error_foreground_service_failed">启动朗读服务失败，语音合成可能受限</string>
@@ -73,7 +73,7 @@
     <string name="cd_play_button">播放语音</string>
     <string name="cd_stop_button">停止播放</string>
     <string name="cd_settings_button">打开设置</string>
-    <string name="cd_engine_selector">选择合成引擎</string>
+    <string name="cd_provider_selector">选择合成供应商</string>
 
     <!-- 权限检查 -->
     <string name="permission_required_title">权限请求</string>
@@ -124,9 +124,9 @@
     <string name="notification_title">Talkify 正在朗读</string>
     <string name="notification_text">点击打开应用</string>
 
-    <!-- 默认引擎提示 -->
-    <string name="default_engine_banner_title">设为默认引擎</string>
-    <string name="default_engine_banner_content">点击此处将 Talkify 设为默认语音合成引擎</string>
+    <!-- 默认供应商提示 -->
+    <string name="default_provider_banner_title">设为默认供应商</string>
+    <string name="default_provider_banner_content">点击此处将 Talkify 设为默认语音合成供应商</string>
 
     <!-- 关于页面提示 -->
     <string name="about_page_hint_banner_title">关于应用</string>
@@ -137,7 +137,7 @@
     <string name="about_version_format">版本 %1$s</string>
     <string name="about_github">开源仓库</string>
     <string name="about_github_url">https://github.com/LonePheasantWarrior/TalkifyTTS</string>
-    <string name="about_description">一款基于 Android 的现代化 TTS 引擎应用，连接云端大模型的高质量语音合成能力</string>
+    <string name="about_description">一款基于 Android 的现代化 TTS 供应商应用，连接云端大模型的高质量语音合成能力</string>
     <string name="about_qq_group">QQ群</string>
     <string name="about_qq_group_number">1087849270</string>
     <string name="about_qq_group_note">仅限技术交流，禁止商业推广</string>

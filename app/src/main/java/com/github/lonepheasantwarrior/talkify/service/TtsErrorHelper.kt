@@ -66,7 +66,7 @@ object TtsErrorHelper {
      * 检查是否为配置错误
      */
     fun isConfigurationError(errorCode: Int): Boolean {
-        return errorCode == TtsErrorCode.ERROR_ENGINE_NOT_CONFIGURED ||
+        return errorCode == TtsErrorCode.ERROR_PROVIDER_NOT_CONFIGURED ||
                 errorCode == TtsErrorCode.ERROR_CONFIG_NOT_FOUND
     }
 

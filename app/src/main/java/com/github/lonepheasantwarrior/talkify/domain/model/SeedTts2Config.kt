@@ -1,9 +1,9 @@
 package com.github.lonepheasantwarrior.talkify.domain.model
 
 /**
- * 豆包语音合成 2.0 引擎配置
+ * 豆包语音合成 2.0 供应商配置
  *
- * 继承 [BaseEngineConfig]，封装豆包语音合成引擎所需的配置信息
+ * 继承 [BaseProviderConfig]，封装豆包语音合成供应商所需的配置信息
  * 使用火山引擎服务的 API Key 进行认证
  *
  * @property voiceId 声音 ID，如 "zh_female_vv_uranus_bigtts"
@@ -13,4 +13,4 @@ package com.github.lonepheasantwarrior.talkify.domain.model
 data class SeedTts2Config(
     override val voiceId: String = "",
     val apiKey: String = ""
-) : BaseEngineConfig(voiceId)
+) : BaseProviderConfig(voiceId)

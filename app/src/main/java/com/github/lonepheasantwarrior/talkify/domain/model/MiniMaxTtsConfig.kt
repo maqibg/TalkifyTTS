@@ -1,9 +1,9 @@
 package com.github.lonepheasantwarrior.talkify.domain.model
 
 /**
- * MiniMax 语音合成引擎配置
+ * MiniMax 语音合成供应商配置
  *
- * 继承 [BaseEngineConfig]，封装 MiniMax 引擎所需的配置信息
+ * 继承 [BaseProviderConfig]，封装 MiniMax 供应商所需的配置信息
  * 使用 MiniMax 服务的 API Key 进行认证
  *
  * @property voiceId 声音 ID，如 "male-qn-qingse"
@@ -14,4 +14,4 @@ data class MiniMaxTtsConfig(
     override val voiceId: String = "",
     val apiKey: String = "",
     val continuousSound: Boolean = true
-) : BaseEngineConfig(voiceId)
+) : BaseProviderConfig(voiceId)

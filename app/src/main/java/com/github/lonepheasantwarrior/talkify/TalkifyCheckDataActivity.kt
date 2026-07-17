@@ -6,14 +6,14 @@ import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import com.github.lonepheasantwarrior.talkify.infrastructure.app.repo.SharedPreferencesAppConfigRepository
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
-import com.github.lonepheasantwarrior.talkify.service.engine.impl.Qwen3TtsEngine
-import com.github.lonepheasantwarrior.talkify.service.engine.impl.SeedTts2Engine
+import com.github.lonepheasantwarrior.talkify.service.provider.impl.Qwen3TtsProvider
+import com.github.lonepheasantwarrior.talkify.service.provider.impl.SeedTts2Provider
 
 /**
  * TTS 数据检查 Activity
  *
- * 响应系统或其他应用的 CHECK_TTS_DATA 请求，返回当前引擎支持的语言列表
- * 语言列表根据用户选择的引擎动态获取（使用引擎的静态常量）
+ * 响应系统或其他应用的 CHECK_TTS_DATA 请求，返回当前供应商支持的语言列表
+ * 语言列表根据用户选择的供应商动态获取（使用供应商的静态常量）
  */
 class TalkifyCheckDataActivity : Activity() {
 
@@ -21,8 +21,8 @@ class TalkifyCheckDataActivity : Activity() {
         TtsLogger.d("CHECK_TTS_DATA: TalkifyCheckDataActivity started")
         super.onCreate(savedInstanceState)
 
-        // 获取支持的语言列表（根据当前选择的引擎）
-        val supportedLanguages = getSupportedLanguagesForCurrentEngine()
+        // 获取支持的语言列表（根据当前选择的供应商）
+        val supportedLanguages = getSupportedLanguagesForCurrentProvider()
 
         TtsLogger.d("CHECK_TTS_DATA: Supported languages = $supportedLanguages")
 
@@ -47,28 +47,28 @@ class TalkifyCheckDataActivity : Activity() {
     }
 
     /**
-     * 获取当前选择引擎支持的语言列表
+     * 获取当前选择供应商支持的语言列表
      *
-     * 直接从引擎的静态常量获取，无需创建引擎实例
-     * 返回格式为引擎原始定义的语言代码（如 "zho", "eng"）
+     * 直接从供应商的静态常量获取，无需创建供应商实例
+     * 返回格式为供应商原始定义的语言代码（如 "zho", "eng"）
      *
      * @return 支持的语言代码列表
      */
-    private fun getSupportedLanguagesForCurrentEngine(): ArrayList<String> {
-        // 获取当前选择的引擎 ID
+    private fun getSupportedLanguagesForCurrentProvider(): ArrayList<String> {
+        // 获取当前选择的供应商 ID
         val appConfigRepository = SharedPreferencesAppConfigRepository(this)
-        val selectedEngineId = appConfigRepository.getSelectedEngineId()
-            ?: Qwen3TtsEngine.ENGINE_ID // 默认使用通义千问3
+        val selectedProviderId = appConfigRepository.getSelectedProviderId()
+            ?: Qwen3TtsProvider.PROVIDER_ID // 默认使用通义千问3
 
-        TtsLogger.d("CHECK_TTS_DATA: Selected engine = $selectedEngineId")
+        TtsLogger.d("CHECK_TTS_DATA: Selected provider = $selectedProviderId")
 
-        // 根据引擎 ID 获取对应的静态语言列表
-        return when (selectedEngineId) {
-            SeedTts2Engine.ENGINE_ID -> {
-                ArrayList(SeedTts2Engine.SUPPORTED_LANGUAGES.toList())
+        // 根据供应商 ID 获取对应的静态语言列表
+        return when (selectedProviderId) {
+            SeedTts2Provider.PROVIDER_ID -> {
+                ArrayList(SeedTts2Provider.SUPPORTED_LANGUAGES.toList())
             }
             else -> {
-                ArrayList(Qwen3TtsEngine.SUPPORTED_LANGUAGES.toList())
+                ArrayList(Qwen3TtsProvider.SUPPORTED_LANGUAGES.toList())
             }
         }
     }

@@ -68,21 +68,21 @@ import com.github.lonepheasantwarrior.talkify.domain.model.MiniMaxTtsConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.Qwen3TtsConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.SeedTts2Config
 import com.github.lonepheasantwarrior.talkify.domain.model.TencentTtsConfig
-import com.github.lonepheasantwarrior.talkify.domain.model.TtsEngineRegistry
+import com.github.lonepheasantwarrior.talkify.domain.model.TtsProviderRegistry
 import com.github.lonepheasantwarrior.talkify.domain.model.XiaoMiMimoConfig
 import com.github.lonepheasantwarrior.talkify.domain.repository.AppConfigRepository
-import com.github.lonepheasantwarrior.talkify.domain.repository.EngineConfigRepository
+import com.github.lonepheasantwarrior.talkify.domain.repository.ProviderConfigRepository
 import com.github.lonepheasantwarrior.talkify.domain.repository.VoiceInfo
 import com.github.lonepheasantwarrior.talkify.domain.repository.VoiceRepository
 import com.github.lonepheasantwarrior.talkify.infrastructure.app.power.PowerOptimizationHelper
 import com.github.lonepheasantwarrior.talkify.infrastructure.app.repo.SharedPreferencesAppConfigRepository
-import com.github.lonepheasantwarrior.talkify.infrastructure.engine.repo.Qwen3TtsConfigRepository
-import com.github.lonepheasantwarrior.talkify.infrastructure.engine.repo.Qwen3TtsVoiceRepository
+import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.Qwen3TtsConfigRepository
+import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.Qwen3TtsVoiceRepository
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
-import com.github.lonepheasantwarrior.talkify.service.engine.TtsEngineFactory
+import com.github.lonepheasantwarrior.talkify.service.provider.TtsProviderFactory
 import com.github.lonepheasantwarrior.talkify.ui.components.BatteryOptimizationDialog
 import com.github.lonepheasantwarrior.talkify.ui.components.ConfigBottomSheet
-import com.github.lonepheasantwarrior.talkify.ui.components.EngineSelector
+import com.github.lonepheasantwarrior.talkify.ui.components.ProviderSelector
 import com.github.lonepheasantwarrior.talkify.ui.components.NetworkBlockedDialog
 import com.github.lonepheasantwarrior.talkify.ui.components.NotificationPermissionDialog
 import com.github.lonepheasantwarrior.talkify.ui.components.UpdateDialog
@@ -107,14 +107,14 @@ fun MainScreen(
 
     // --- 启动流程状态管理 ---
     val startupState by viewModel.uiState.collectAsState()
-    val isDefaultEngine by viewModel.isDefaultEngine.collectAsState()
+    val isDefaultProvider by viewModel.isDefaultProvider.collectAsState()
 
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME && startupState == StartupState.Completed) {
-                viewModel.refreshDefaultEngineStatus()
+                viewModel.refreshDefaultProviderStatus()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -139,15 +139,15 @@ fun MainScreen(
 
     // --- 现有业务逻辑 ---
 
-    // 根据当前引擎获取对应的声音仓储
-    fun getVoiceRepository(engineId: String): VoiceRepository {
-        return TtsEngineFactory.createVoiceRepository(engineId, context)
+    // 根据当前供应商获取对应的声音仓储
+    fun getVoiceRepository(providerId: String): VoiceRepository {
+        return TtsProviderFactory.createVoiceRepository(providerId, context)
             ?: Qwen3TtsVoiceRepository(context)
     }
 
-    // 根据当前引擎获取对应的配置仓储
-    fun getConfigRepository(engineId: String): EngineConfigRepository {
-        return TtsEngineFactory.createConfigRepository(engineId, context)
+    // 根据当前供应商获取对应的配置仓储
+    fun getConfigRepository(providerId: String): ProviderConfigRepository {
+        return TtsProviderFactory.createConfigRepository(providerId, context)
             ?: Qwen3TtsConfigRepository(context)
     }
 
@@ -155,23 +155,23 @@ fun MainScreen(
         SharedPreferencesAppConfigRepository(context)
     }
 
-    val availableEngines = TtsEngineRegistry.availableEngines
-    val defaultEngine = TtsEngineRegistry.defaultEngine
+    val availableProviders = TtsProviderRegistry.availableProviders
+    val defaultProvider = TtsProviderRegistry.defaultProvider
 
-    var currentEngine by remember {
-        mutableStateOf(defaultEngine)
+    var currentProvider by remember {
+        mutableStateOf(defaultProvider)
     }
 
     // Demo Service logic moved to ViewModel
 
     LaunchedEffect(appConfigRepository) {
-        val savedEngineId = appConfigRepository.getSelectedEngineId()
-        if (savedEngineId != null) {
-            TtsEngineRegistry.getEngine(savedEngineId)?.let { engine ->
-                currentEngine = engine
+        val savedProviderId = appConfigRepository.getSelectedProviderId()
+        if (savedProviderId != null) {
+            TtsProviderRegistry.getProvider(savedProviderId)?.let { provider ->
+                currentProvider = provider
             }
         } else {
-            appConfigRepository.saveSelectedEngineId(defaultEngine.id)
+            appConfigRepository.saveSelectedProviderId(defaultProvider.id)
         }
     }
 
@@ -198,13 +198,13 @@ fun MainScreen(
     var inputText by remember { mutableStateOf(defaultInputText) }
     val isConfigSheetOpen by viewModel.isConfigSheetOpen.collectAsState()
 
-    var savedConfig by remember(currentEngine.id) {
-        mutableStateOf(getConfigRepository(currentEngine.id).getConfig(currentEngine.id))
+    var savedConfig by remember(currentProvider.id) {
+        mutableStateOf(getConfigRepository(currentProvider.id).getConfig(currentProvider.id))
     }
 
-    LaunchedEffect(currentEngine) {
-        savedConfig = getConfigRepository(currentEngine.id).getConfig(currentEngine.id)
-        val voices = getVoiceRepository(currentEngine.id).getVoicesForEngine(currentEngine)
+    LaunchedEffect(currentProvider) {
+        savedConfig = getConfigRepository(currentProvider.id).getConfig(currentProvider.id)
+        val voices = getVoiceRepository(currentProvider.id).getVoicesForProvider(currentProvider)
         availableVoices = voices
         selectedVoice = availableVoices.find { it.voiceId == savedConfig.voiceId } ?: voices.firstOrNull()
     }
@@ -273,11 +273,11 @@ fun MainScreen(
             }
 
             AnimatedVisibility(
-                visible = !isDefaultEngine && startupState == StartupState.Completed,
+                visible = !isDefaultProvider && startupState == StartupState.Completed,
                 enter = slideInVertically(initialOffsetY = { -it }),
                 exit = slideOutVertically(targetOffsetY = { -it })
             ) {
-                 DefaultEngineBanner(
+                 DefaultProviderBanner(
                      onClick = { viewModel.openTtsSettings() }
                  )
             }
@@ -326,12 +326,12 @@ fun MainScreen(
                     ) {
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        EngineSelector(
-                            currentEngine = currentEngine,
-                            availableEngines = availableEngines,
-                            onEngineSelected = { engine ->
-                                currentEngine = engine
-                                appConfigRepository.saveSelectedEngineId(engine.id)
+                        ProviderSelector(
+                            currentProvider = currentProvider,
+                            availableProviders = availableProviders,
+                            onProviderSelected = { provider ->
+                                currentProvider = provider
+                                appConfigRepository.saveSelectedProviderId(provider.id)
                             },
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -393,13 +393,13 @@ fun MainScreen(
 
                                 if (!isConfigured) {
                                     scope.launch {
-                                        snackbarHostState.showSnackbar("请先完成引擎配置")
+                                        snackbarHostState.showSnackbar("请先完成供应商配置")
                                     }
                                     viewModel.openConfigSheet()
                                     return@VoicePreview
                                 }
 
-                                viewModel.playDemo(currentEngine.id, inputText, config)
+                                viewModel.playDemo(currentProvider.id, inputText, config)
                             },
                             onStopClick = {
                                 viewModel.stopDemo()
@@ -416,13 +416,13 @@ fun MainScreen(
 
     ConfigBottomSheet(
         onConfigSaved = {
-            savedConfig = getConfigRepository(currentEngine.id).getConfig(currentEngine.id)
+            savedConfig = getConfigRepository(currentProvider.id).getConfig(currentProvider.id)
         },
         isOpen = isConfigSheetOpen,
         onDismiss = { viewModel.closeConfigSheet() },
-        currentEngine = currentEngine,
-        configRepository = getConfigRepository(currentEngine.id),
-        voiceRepository = getVoiceRepository(currentEngine.id)
+        currentProvider = currentProvider,
+        configRepository = getConfigRepository(currentProvider.id),
+        voiceRepository = getVoiceRepository(currentProvider.id)
     )
 
     // --- 启动流程中的非阻塞弹窗 ---
@@ -489,7 +489,7 @@ fun MainScreen(
 }
 
 @Composable
-fun DefaultEngineBanner(
+fun DefaultProviderBanner(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -520,13 +520,13 @@ fun DefaultEngineBanner(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = stringResource(R.string.default_engine_banner_title),
+                    text = stringResource(R.string.default_provider_banner_title),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onTertiaryContainer
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = stringResource(R.string.default_engine_banner_content),
+                    text = stringResource(R.string.default_provider_banner_content),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
                 )

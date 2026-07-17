@@ -1,18 +1,18 @@
-package com.github.lonepheasantwarrior.talkify.service.engine.impl
+package com.github.lonepheasantwarrior.talkify.service.provider.impl
 
 import android.speech.tts.Voice
 import android.util.Base64
 import com.github.lonepheasantwarrior.talkify.R
 import com.github.lonepheasantwarrior.talkify.TalkifyAppHolder
 import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlParser
-import com.github.lonepheasantwarrior.talkify.domain.model.BaseEngineConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.XiaoMiMimoConfig
 import com.github.lonepheasantwarrior.talkify.service.TtsErrorCode
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
-import com.github.lonepheasantwarrior.talkify.service.engine.AbstractTtsEngine
-import com.github.lonepheasantwarrior.talkify.service.engine.AudioConfig
-import com.github.lonepheasantwarrior.talkify.service.engine.SynthesisParams
-import com.github.lonepheasantwarrior.talkify.service.engine.TtsSynthesisListener
+import com.github.lonepheasantwarrior.talkify.service.provider.AbstractTtsProvider
+import com.github.lonepheasantwarrior.talkify.service.provider.AudioConfig
+import com.github.lonepheasantwarrior.talkify.service.provider.SynthesisParams
+import com.github.lonepheasantwarrior.talkify.service.provider.TtsSynthesisListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -33,21 +33,21 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 /**
- * 小米 - MiMo 语音合成引擎实现
+ * 小米 - MiMo 语音合成供应商实现
  *
- * 继承 [AbstractTtsEngine]，实现 TTS 引擎接口
+ * 继承 [AbstractTtsProvider]，实现 TTS 供应商接口
  * 基于 OkHttp 实现 HTTP 流式音频合成，支持连接复用
  * 将音频数据块实时回调给系统
  *
- * 引擎 ID：xiaomi-mimo-tts
+ * 供应商 ID：xiaomi-mimo-tts
  * 服务提供商：小米
  * API 文档：https://platform.xiaomimimo.com/docs/zh-CN/usage-guide/speech-synthesis
  */
-class XiaoMiMimoTtsEngine : AbstractTtsEngine() {
+class XiaoMiMimoTtsProvider : AbstractTtsProvider() {
 
     companion object {
-        const val ENGINE_ID = "xiaomi-mimo-tts"
-        const val ENGINE_NAME = "小米MiMo语音合成"
+        const val PROVIDER_ID = "xiaomi-mimo-tts"
+        const val PROVIDER_NAME = "小米MiMo语音合成"
         private const val VOICE_NAME_SEPARATOR = "::"
         private const val API_URL = "https://api.xiaomimimo.com/v1/chat/completions"
         private const val MODEL_NAME = "mimo-v2-tts"
@@ -75,7 +75,7 @@ class XiaoMiMimoTtsEngine : AbstractTtsEngine() {
     }
 
     // 协程作用域用于异步处理
-    private val engineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val providerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     @Volatile
     private var isCancelled = false
@@ -117,27 +117,27 @@ class XiaoMiMimoTtsEngine : AbstractTtsEngine() {
         }
     }
 
-    override fun getEngineId(): String = ENGINE_ID
+    override fun getProviderId(): String = PROVIDER_ID
 
-    override fun getEngineName(): String = ENGINE_NAME
+    override fun getProviderName(): String = PROVIDER_NAME
 
     override fun getAudioConfig(): AudioConfig = audioConfig
 
     override fun synthesize(
-        text: String, params: SynthesisParams, config: BaseEngineConfig, listener: TtsSynthesisListener
+        text: String, params: SynthesisParams, config: BaseProviderConfig, listener: TtsSynthesisListener
     ) {
         checkNotReleased()
 
         val mimoConfig = config as? XiaoMiMimoConfig
         if (mimoConfig == null) {
             logError("Invalid config type, expected XiaoMiMimoConfig")
-            listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_ENGINE_NOT_CONFIGURED))
+            listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_PROVIDER_NOT_CONFIGURED))
             return
         }
 
         if (mimoConfig.apiKey.isEmpty()) {
             logError("API Key is not configured")
-            listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_ENGINE_NOT_CONFIGURED))
+            listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_PROVIDER_NOT_CONFIGURED))
             return
         }
 
@@ -170,7 +170,7 @@ class XiaoMiMimoTtsEngine : AbstractTtsEngine() {
         logDebug("Text split into ${textChunks.size} chunks")
 
         // 使用协程顺序处理所有文本块
-        engineScope.launch {
+        providerScope.launch {
             processChunksSequentially(textChunks, mimoConfig, params, listener)
         }
     }
@@ -667,15 +667,15 @@ class XiaoMiMimoTtsEngine : AbstractTtsEngine() {
     }
 
     override fun release() {
-        logInfo("Releasing engine")
+        logInfo("Releasing provider")
         isCancelled = true
         currentCall?.cancel()
         currentCall = null
-        engineScope.cancel()
+        providerScope.cancel()
         super.release()
     }
 
-    override fun isConfigured(config: BaseEngineConfig?): Boolean {
+    override fun isConfigured(config: BaseProviderConfig?): Boolean {
         val mimoConfig = config as? XiaoMiMimoConfig
         var result = false
         if (mimoConfig != null) {
@@ -685,7 +685,7 @@ class XiaoMiMimoTtsEngine : AbstractTtsEngine() {
         return result
     }
 
-    override fun createDefaultConfig(): BaseEngineConfig {
+    override fun createDefaultConfig(): BaseProviderConfig {
         return XiaoMiMimoConfig()
     }
 

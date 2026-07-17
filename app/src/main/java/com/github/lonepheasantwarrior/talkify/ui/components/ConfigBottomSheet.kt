@@ -23,35 +23,35 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.github.lonepheasantwarrior.talkify.R
-import com.github.lonepheasantwarrior.talkify.domain.model.BaseEngineConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.ConfigItem
 import com.github.lonepheasantwarrior.talkify.domain.model.MicrosoftTtsConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.MiniMaxTtsConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.Qwen3TtsConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.SeedTts2Config
 import com.github.lonepheasantwarrior.talkify.domain.model.TencentTtsConfig
-import com.github.lonepheasantwarrior.talkify.domain.model.TtsEngine
+import com.github.lonepheasantwarrior.talkify.domain.model.TtsProvider
 import com.github.lonepheasantwarrior.talkify.domain.model.XiaoMiMimoConfig
-import com.github.lonepheasantwarrior.talkify.domain.repository.EngineConfigRepository
+import com.github.lonepheasantwarrior.talkify.domain.repository.ProviderConfigRepository
 import com.github.lonepheasantwarrior.talkify.domain.repository.VoiceInfo
 import com.github.lonepheasantwarrior.talkify.domain.repository.VoiceRepository
-import com.github.lonepheasantwarrior.talkify.service.engine.TtsEngineApi
-import com.github.lonepheasantwarrior.talkify.service.engine.TtsEngineFactory
+import com.github.lonepheasantwarrior.talkify.service.provider.TtsProviderApi
+import com.github.lonepheasantwarrior.talkify.service.provider.TtsProviderFactory
 
 /**
  * 配置底部弹窗
  *
- * 展示引擎配置编辑界面，包含 API Key 输入和声音选择
+ * 展示供应商配置编辑界面，包含 API Key 输入和声音选择
  * 通过右下角悬浮按钮唤出
  *
- * 支持多引擎架构，每个引擎可以定义自己的配置项
- * 使用引擎的 [TtsEngineApi.createDefaultConfig] 方法动态创建正确的配置类型
- * 使用引擎的 [TtsEngineApi.getConfigLabel] 方法获取本地化的配置项标签
+ * 支持多供应商架构，每个供应商可以定义自己的配置项
+ * 使用供应商的 [TtsProviderApi.createDefaultConfig] 方法动态创建正确的配置类型
+ * 使用供应商的 [TtsProviderApi.getConfigLabel] 方法获取本地化的配置项标签
  *
  * @param modifier 修饰符
  * @param isOpen 是否展开弹窗
  * @param onDismiss 关闭弹窗的回调
- * @param currentEngine 当前选中的引擎
+ * @param currentProvider 当前选中的供应商
  * @param configRepository 配置仓储
  * @param voiceRepository 声音仓储
  * @param onConfigSaved 配置保存后的回调
@@ -62,8 +62,8 @@ fun ConfigBottomSheet(
     modifier: Modifier = Modifier,
     isOpen: Boolean,
     onDismiss: () -> Unit,
-    currentEngine: TtsEngine,
-    configRepository: EngineConfigRepository,
+    currentProvider: TtsProvider,
+    configRepository: ProviderConfigRepository,
     voiceRepository: VoiceRepository,
     onConfigSaved: (() -> Unit)? = null
 ) {
@@ -79,19 +79,19 @@ fun ConfigBottomSheet(
         }
     }
 
-    val savedConfig = remember(currentEngine, isOpen) {
-        configRepository.getConfig(currentEngine.id)
+    val savedConfig = remember(currentProvider, isOpen) {
+        configRepository.getConfig(currentProvider.id)
     }
 
-    val engine = remember(currentEngine.id) {
-        TtsEngineFactory.createEngine(currentEngine.id)
+    val provider = remember(currentProvider.id) {
+        TtsProviderFactory.createProvider(currentProvider.id)
     }
 
-    val defaultConfig = remember(currentEngine.id) {
-        engine?.createDefaultConfig() ?: throw IllegalStateException("Engine not found: ${currentEngine.id}")
+    val defaultConfig = remember(currentProvider.id) {
+        provider?.createDefaultConfig() ?: throw IllegalStateException("Provider not found: ${currentProvider.id}")
     }
 
-    val configForEdit: BaseEngineConfig = remember(savedConfig, defaultConfig) {
+    val configForEdit: BaseProviderConfig = remember(savedConfig, defaultConfig) {
         when (defaultConfig) {
             is Qwen3TtsConfig -> {
                 val qwenSaved = savedConfig as? Qwen3TtsConfig
@@ -121,27 +121,27 @@ fun ConfigBottomSheet(
         }
     }
 
-    val getLabel: (String) -> String? = remember(engine) {
+    val getLabel: (String) -> String? = remember(provider) {
         { key: String ->
-            engine?.getConfigLabel(key, context)
+            provider?.getConfigLabel(key, context)
         }
     }
 
-    var configItems by remember(currentEngine, configForEdit, isOpen, getLabel) {
+    var configItems by remember(currentProvider, configForEdit, isOpen, getLabel) {
         mutableStateOf(
             buildConfigItems(configForEdit, getLabel)
         )
     }
 
-    var availableVoices by remember(currentEngine, isOpen) {
+    var availableVoices by remember(currentProvider, isOpen) {
         mutableStateOf<List<VoiceInfo>>(emptyList())
     }
     var isVoicesLoading by remember { mutableStateOf(false) }
 
-    LaunchedEffect(currentEngine, isOpen) {
+    LaunchedEffect(currentProvider, isOpen) {
         isVoicesLoading = true
         try {
-            availableVoices = voiceRepository.getVoicesForEngine(currentEngine)
+            availableVoices = voiceRepository.getVoicesForProvider(currentProvider)
         } finally {
             isVoicesLoading = false
         }
@@ -178,7 +178,7 @@ fun ConfigBottomSheet(
                     }
                 } else {
                     ConfigEditor(
-                    engineName = currentEngine.name,
+                    providerName = currentProvider.name,
                     configItems = configItems,
                     availableVoices = availableVoices,
                     onItemValueChange = { changedItem, newValue ->
@@ -191,7 +191,7 @@ fun ConfigBottomSheet(
                             configItems,
                             defaultConfig
                         )
-                        configRepository.saveConfig(currentEngine.id, newConfig)
+                        configRepository.saveConfig(currentProvider.id, newConfig)
                         onConfigSaved?.invoke()
                         onDismiss()
                     },
@@ -212,7 +212,7 @@ fun ConfigBottomSheet(
 }
 
 private fun buildConfigItems(
-    config: BaseEngineConfig,
+    config: BaseProviderConfig,
     getLabel: (String) -> String?
 ): List<ConfigItem> {
     val items = mutableListOf<ConfigItem>()
@@ -343,8 +343,8 @@ private fun buildConfigItems(
 
 private fun buildConfigFromItems(
     items: List<ConfigItem>,
-    defaultConfig: BaseEngineConfig
-): BaseEngineConfig {
+    defaultConfig: BaseProviderConfig
+): BaseProviderConfig {
     val voiceId = items.find { it.key == "voice_id" }?.value ?: defaultConfig.voiceId
 
     return when (defaultConfig) {

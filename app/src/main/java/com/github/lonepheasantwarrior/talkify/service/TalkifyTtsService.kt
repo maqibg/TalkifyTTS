@@ -8,17 +8,17 @@ import android.speech.tts.TextToSpeech
 import android.speech.tts.TextToSpeechService
 import android.speech.tts.Voice
 import com.github.lonepheasantwarrior.talkify.R
-import com.github.lonepheasantwarrior.talkify.domain.model.BaseEngineConfig
-import com.github.lonepheasantwarrior.talkify.domain.model.TtsEngineRegistry
+import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.TtsProviderRegistry
 import com.github.lonepheasantwarrior.talkify.domain.repository.AppConfigRepository
-import com.github.lonepheasantwarrior.talkify.domain.repository.EngineConfigRepository
+import com.github.lonepheasantwarrior.talkify.domain.repository.ProviderConfigRepository
 import com.github.lonepheasantwarrior.talkify.infrastructure.app.notification.TalkifyNotificationHelper
 import com.github.lonepheasantwarrior.talkify.infrastructure.app.repo.SharedPreferencesAppConfigRepository
-import com.github.lonepheasantwarrior.talkify.infrastructure.engine.repo.Qwen3TtsConfigRepository
-import com.github.lonepheasantwarrior.talkify.service.engine.SynthesisParams
-import com.github.lonepheasantwarrior.talkify.service.engine.TtsEngineApi
-import com.github.lonepheasantwarrior.talkify.service.engine.TtsEngineFactory
-import com.github.lonepheasantwarrior.talkify.service.engine.TtsSynthesisListener
+import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.Qwen3TtsConfigRepository
+import com.github.lonepheasantwarrior.talkify.service.provider.SynthesisParams
+import com.github.lonepheasantwarrior.talkify.service.provider.TtsProviderApi
+import com.github.lonepheasantwarrior.talkify.service.provider.TtsProviderFactory
+import com.github.lonepheasantwarrior.talkify.service.provider.TtsSynthesisListener
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
@@ -37,11 +37,11 @@ private const val FOREGROUND_SERVICE_N_ID = 1001
 /**
  * Talkify TTS 服务
  *
- * 实现 [TextToSpeechService]，作为系统 TTS 框架与本应用引擎之间的桥梁
+ * 实现 [TextToSpeechService]，作为系统 TTS 框架与本应用供应商之间的桥梁
  * 负责：
- * 1. 根据用户选择的引擎 ID 获取对应的合成引擎
- * 2. 获取用户配置的引擎设置
- * 3. 委托引擎执行实际的语音合成
+ * 1. 根据用户选择的供应商 ID 获取对应的合成供应商
+ * 2. 获取用户配置的供应商设置
+ * 3. 委托供应商执行实际的语音合成
  *
  * 采用请求队列机制实现请求调度，支持请求优先级和流量控制
  * 支持兼容模式和非兼容模式两种音频处理方式
@@ -52,10 +52,10 @@ private const val FOREGROUND_SERVICE_N_ID = 1001
  * @property wakeLock 电源唤醒锁，防止合成过程中设备休眠
  * @property isForegroundServiceRunning 前台服务运行状态
  * @property appConfigRepository 应用配置仓储，管理全局应用设置
- * @property engineConfigRepository 引擎配置仓储，管理各引擎配置
- * @property currentEngine 当前活动的 TTS 引擎实例
- * @property currentEngineId 当前引擎的唯一标识符
- * @property currentConfig 当前引擎的配置信息
+ * @property providerConfigRepository 供应商配置仓储，管理各供应商配置
+ * @property currentProvider 当前活动的 TTS 供应商实例
+ * @property currentProviderId 当前供应商的唯一标识符
+ * @property currentConfig 当前供应商的配置信息
  */
 class TalkifyTtsService : TextToSpeechService() {
 
@@ -79,21 +79,21 @@ class TalkifyTtsService : TextToSpeechService() {
 
     private var appConfigRepository: AppConfigRepository? = null
 
-    private var engineConfigRepository: EngineConfigRepository? = null
+    private var providerConfigRepository: ProviderConfigRepository? = null
 
-    private var currentEngine: TtsEngineApi? = null
+    private var currentProvider: TtsProviderApi? = null
 
-    private var currentEngineId: String? = null
+    private var currentProviderId: String? = null
 
-    private var currentConfig: BaseEngineConfig? = null
+    private var currentConfig: BaseProviderConfig? = null
 
     override fun onCreate() {
         super.onCreate()
         TtsLogger.i("TalkifyTtsService onCreate")
         initializeWakeLock()
         initializeRepositories()
-        val engineInitSuccess = initializeEngine()
-        TtsLogger.d("Engine initialization result: $engineInitSuccess")
+        val providerInitSuccess = initializeProvider()
+        TtsLogger.d("Provider initialization result: $providerInitSuccess")
     }
 
     /**
@@ -239,24 +239,24 @@ class TalkifyTtsService : TextToSpeechService() {
     }
 
     /**
-     * 引擎配置仓储映射表
-     * 根据引擎 ID 获取对应的配置仓储
+     * 供应商配置仓储映射表
+     * 根据供应商 ID 获取对应的配置仓储
      */
-    private val engineConfigRepositoryMap: MutableMap<String, EngineConfigRepository> = mutableMapOf()
+    private val providerConfigRepositoryMap: MutableMap<String, ProviderConfigRepository> = mutableMapOf()
 
     /**
-     * 获取指定引擎的配置仓储
+     * 获取指定供应商的配置仓储
      *
-     * 根据引擎 ID 动态创建或获取对应的配置仓储实例
-     * 支持多引擎配置隔离存储
+     * 根据供应商 ID 动态创建或获取对应的配置仓储实例
+     * 支持多供应商配置隔离存储
      *
-     * @param engineId 引擎唯一标识符
-     * @return 对应引擎的配置仓储实例
+     * @param providerId 供应商唯一标识符
+     * @return 对应供应商的配置仓储实例
      */
-    private fun getEngineConfigRepository(engineId: String): EngineConfigRepository {
-        return engineConfigRepositoryMap.getOrPut(engineId) {
-            TtsEngineFactory.createConfigRepository(engineId, applicationContext) ?: run {
-                TtsLogger.w("Unknown engine ID: $engineId, using default Qwen3TtsConfigRepository")
+    private fun getProviderConfigRepository(providerId: String): ProviderConfigRepository {
+        return providerConfigRepositoryMap.getOrPut(providerId) {
+            TtsProviderFactory.createConfigRepository(providerId, applicationContext) ?: run {
+                TtsLogger.w("Unknown provider ID: $providerId, using default Qwen3TtsConfigRepository")
                 Qwen3TtsConfigRepository(applicationContext)
             }
         }
@@ -266,14 +266,14 @@ class TalkifyTtsService : TextToSpeechService() {
      * 初始化仓储
      *
      * 创建应用配置仓储的实例
-     * 引擎配置仓储采用延迟初始化策略，根据实际使用的引擎动态创建
+     * 供应商配置仓储采用延迟初始化策略，根据实际使用的供应商动态创建
      */
     private fun initializeRepositories() {
         TtsLogger.d("Initializing repositories")
         try {
             appConfigRepository = SharedPreferencesAppConfigRepository(applicationContext)
-            // 引擎配置仓储不再在这里统一初始化
-            // 而是在 getEngineConfigRepository() 中根据引擎 ID 动态创建
+            // 供应商配置仓储不再在这里统一初始化
+            // 而是在 getProviderConfigRepository() 中根据供应商 ID 动态创建
             TtsLogger.i("Repositories initialized successfully")
         } catch (e: Exception) {
             TtsLogger.e("Failed to initialize repositories", e)
@@ -282,48 +282,48 @@ class TalkifyTtsService : TextToSpeechService() {
     }
 
     /**
-     * 初始化 TTS 引擎
+     * 初始化 TTS 供应商
      *
-     * 根据用户选择的引擎 ID 创建对应的合成引擎
-     * 并从配置仓储加载引擎配置
+     * 根据用户选择的供应商 ID 创建对应的合成供应商
+     * 并从配置仓储加载供应商配置
      *
      * @return 初始化是否成功
      */
-    private fun initializeEngine(): Boolean {
+    private fun initializeProvider(): Boolean {
         if (appConfigRepository == null) {
             initializeRepositories()
         }
 
-        val selectedEngineId = appConfigRepository?.getSelectedEngineId()
-        val engineId = selectedEngineId ?: run {
-            TtsLogger.w("No selected engine found, using default")
-            TtsEngineRegistry.defaultEngine.id
+        val selectedProviderId = appConfigRepository?.getSelectedProviderId()
+        val providerId = selectedProviderId ?: run {
+            TtsLogger.w("No selected provider found, using default")
+            TtsProviderRegistry.defaultProvider.id
         }
 
-        TtsLogger.d("Initializing engine: $engineId")
+        TtsLogger.d("Initializing provider: $providerId")
 
-        if (currentEngineId != engineId) {
-            TtsLogger.i("Engine changed from $currentEngineId to $engineId, reinitializing")
-            currentEngine?.release()
-            currentEngine = TtsEngineFactory.createEngine(engineId)
-            currentEngineId = engineId
+        if (currentProviderId != providerId) {
+            TtsLogger.i("Provider changed from $currentProviderId to $providerId, reinitializing")
+            currentProvider?.release()
+            currentProvider = TtsProviderFactory.createProvider(providerId)
+            currentProviderId = providerId
 
-            if (currentEngine == null) {
-                TtsLogger.e("Failed to create engine: $engineId")
-                TalkifyNotificationHelper.sendSystemNotification(this, getString(R.string.tts_error_engine_init_failed))
+            if (currentProvider == null) {
+                TtsLogger.e("Failed to create provider: $providerId")
+                TalkifyNotificationHelper.sendSystemNotification(this, getString(R.string.tts_error_provider_init_failed))
                 return false
             }
         }
 
-        val ttsEngine = TtsEngineRegistry.getEngine(engineId)
-        if (ttsEngine == null) {
-            TtsLogger.e("Engine not found in registry: $engineId")
-            TalkifyNotificationHelper.sendSystemNotification(this, getString(R.string.tts_error_engine_not_found))
+        val ttsProvider = TtsProviderRegistry.getProvider(providerId)
+        if (ttsProvider == null) {
+            TtsLogger.e("Provider not found in registry: $providerId")
+            TalkifyNotificationHelper.sendSystemNotification(this, getString(R.string.tts_error_provider_not_found))
             return false
         }
 
-        currentConfig = engineConfigRepository?.getConfig(engineId)
-        TtsLogger.d("Engine initialized: ${currentEngine?.getEngineName()}")
+        currentConfig = providerConfigRepository?.getConfig(providerId)
+        TtsLogger.d("Provider initialized: ${currentProvider?.getProviderName()}")
         return true
     }
 
@@ -370,12 +370,12 @@ class TalkifyTtsService : TextToSpeechService() {
     fun isLanguageSupported(lang: String?): Boolean {
         if (lang == null) return false
 
-        if (currentEngine == null) {
-            initializeEngine()
+        if (currentProvider == null) {
+            initializeProvider()
         }
 
         // 3. 最终检查
-        return currentEngine?.getSupportedLanguages()?.contains(lang) ?: false
+        return currentProvider?.getSupportedLanguages()?.contains(lang) ?: false
     }
 
     override fun onLoadLanguage(
@@ -442,25 +442,25 @@ class TalkifyTtsService : TextToSpeechService() {
     }
 
     override fun onGetLanguage(): Array<String>? {
-        val engine = currentEngine
-        if (engine == null) {
-            TtsLogger.w("onGetLanguage: no engine available")
+        val provider = currentProvider
+        if (provider == null) {
+            TtsLogger.w("onGetLanguage: no provider available")
             return null
         }
 
-        if (!engine.isConfigured(currentConfig)) {
-            TtsLogger.w("onGetLanguage: engine not configured")
+        if (!provider.isConfigured(currentConfig)) {
+            TtsLogger.w("onGetLanguage: provider not configured")
             return null
         }
 
-        val defaultLanguages = engine.getDefaultLanguages()
+        val defaultLanguages = provider.getDefaultLanguages()
         TtsLogger.d("onGetLanguage: return $defaultLanguages")
         return defaultLanguages
     }
 
     override fun onGetVoices(): List<Voice?>? {
         TtsLogger.d("onGetVoices: it is")
-        return currentEngine?.getSupportedVoices()
+        return currentProvider?.getSupportedVoices()
     }
 
     override fun onGetDefaultVoiceNameFor(
@@ -474,7 +474,7 @@ class TalkifyTtsService : TextToSpeechService() {
         if (config != null && config.voiceId.isNotBlank()) {
             currentVoiceId = config.voiceId
         }
-        val defaultVoiceName = currentEngine?.getDefaultVoiceId(lang, country, variant, currentVoiceId)
+        val defaultVoiceName = currentProvider?.getDefaultVoiceId(lang, country, variant, currentVoiceId)
         TtsLogger.d("onGetDefaultVoiceNameFor: defaultVoiceName: $defaultVoiceName")
         return defaultVoiceName
     }
@@ -482,17 +482,17 @@ class TalkifyTtsService : TextToSpeechService() {
     /**
      * 检查声音 ID 是否正确
      *
-     * 验证指定的声音 ID 是否被当前引擎支持
+     * 验证指定的声音 ID 是否被当前供应商支持
      *
      * @param voiceId 声音 ID
      * @return TextToSpeech.SUCCESS 或 TextToSpeech.ERROR
      */
     private fun isVoiceIdCorrect(voiceId: String?): Int {
-        if (currentEngine == null) {
-            initializeEngine()
+        if (currentProvider == null) {
+            initializeProvider()
         }
 
-        return if (currentEngine?.isVoiceIdCorrect(voiceId) == true) {
+        return if (currentProvider?.isVoiceIdCorrect(voiceId) == true) {
             TextToSpeech.SUCCESS
         } else {
             TextToSpeech.ERROR
@@ -555,48 +555,48 @@ class TalkifyTtsService : TextToSpeechService() {
         startForegroundService()
 
         try {
-            // 3. 准备引擎与配置
-            // 每次合成前重新读取配置，确保获取最新的引擎选择
-            val selectedEngineId = appConfigRepository?.getSelectedEngineId()
-                ?: TtsEngineRegistry.defaultEngine.id
+            // 3. 准备供应商与配置
+            // 每次合成前重新读取配置，确保获取最新的供应商选择
+            val selectedProviderId = appConfigRepository?.getSelectedProviderId()
+                ?: TtsProviderRegistry.defaultProvider.id
             
-            // 检测引擎是否切换，如果切换则重新初始化
-            if (currentEngineId != selectedEngineId) {
-                TtsLogger.i("Engine changed from $currentEngineId to $selectedEngineId during synthesis, reinitializing")
-                currentEngine?.release()
-                currentEngine = TtsEngineFactory.createEngine(selectedEngineId)
-                currentEngineId = selectedEngineId
+            // 检测供应商是否切换，如果切换则重新初始化
+            if (currentProviderId != selectedProviderId) {
+                TtsLogger.i("Provider changed from $currentProviderId to $selectedProviderId during synthesis, reinitializing")
+                currentProvider?.release()
+                currentProvider = TtsProviderFactory.createProvider(selectedProviderId)
+                currentProviderId = selectedProviderId
                 
-                if (currentEngine == null) {
-                    TtsLogger.e("Failed to create engine: $selectedEngineId")
+                if (currentProvider == null) {
+                    TtsLogger.e("Failed to create provider: $selectedProviderId")
                     TalkifyNotificationHelper.sendSystemNotification(
                         this@TalkifyTtsService,
-                        getString(R.string.tts_error_engine_init_failed)
+                        getString(R.string.tts_error_provider_init_failed)
                     )
-                    callback.error(TtsErrorCode.toAndroidError(TtsErrorCode.ERROR_NO_ENGINE))
+                    callback.error(TtsErrorCode.toAndroidError(TtsErrorCode.ERROR_NO_PROVIDER))
                     return@runBlocking
                 }
                 
                 // 更新配置仓储的缓存
-                engineConfigRepositoryMap.remove(selectedEngineId)
+                providerConfigRepositoryMap.remove(selectedProviderId)
             }
             
-            val engineId = currentEngineId
-            val engine = currentEngine
-            if (engineId == null || engine == null) {
-                TtsLogger.e("processRequestSynchronously: engine not ready")
-                callback.error(TtsErrorCode.toAndroidError(TtsErrorCode.ERROR_NO_ENGINE))
+            val providerId = currentProviderId
+            val provider = currentProvider
+            if (providerId == null || provider == null) {
+                TtsLogger.e("processRequestSynchronously: provider not ready")
+                callback.error(TtsErrorCode.toAndroidError(TtsErrorCode.ERROR_NO_PROVIDER))
                 TalkifyNotificationHelper.sendSystemNotification(
                     this@TalkifyTtsService,
-                    getString(R.string.tts_error_engine_not_ready)
+                    getString(R.string.tts_error_provider_not_ready)
                 )
                 return@runBlocking
             }
 
-            val config = getEngineConfigRepository(engineId).getConfig(engineId)
-            if (!engine.isConfigured(config)) {
+            val config = getProviderConfigRepository(providerId).getConfig(providerId)
+            if (!provider.isConfigured(config)) {
                 TtsLogger.e("processRequestSynchronously: config not ready")
-                callback.error(TtsErrorCode.toAndroidError(TtsErrorCode.ERROR_ENGINE_NOT_CONFIGURED))
+                callback.error(TtsErrorCode.toAndroidError(TtsErrorCode.ERROR_PROVIDER_NOT_CONFIGURED))
                 TalkifyNotificationHelper.sendSystemNotification(
                     this@TalkifyTtsService,
                     getString(R.string.tts_error_config_not_ready)
@@ -605,7 +605,7 @@ class TalkifyTtsService : TextToSpeechService() {
             }
             if (config.voiceId.isNotBlank() && request.voiceName.isNotBlank()) {
                 if (config.voiceId != request.voiceName) {
-                    TtsLogger.w("Synthesize: SynthesisRequest.voiceName: ${request.voiceName}, EngineConfig.voiceId: ${config.voiceId}")
+                    TtsLogger.w("Synthesize: SynthesisRequest.voiceName: ${request.voiceName}, ProviderConfig.voiceId: ${config.voiceId}")
                 }
             }
 
@@ -624,7 +624,7 @@ class TalkifyTtsService : TextToSpeechService() {
                 suspendCancellableCoroutine { continuation ->
                     activeContinuation = continuation
 
-                    engine.synthesize(text, params, config, object : TtsSynthesisListener {
+                    provider.synthesize(text, params, config, object : TtsSynthesisListener {
                         override fun onSynthesisStarted() {
                             TtsLogger.d("Synthesis started callback")
                         }
@@ -682,7 +682,7 @@ class TalkifyTtsService : TextToSpeechService() {
             if (result == null) {
                 // 等待超时
                 TtsLogger.e("Synthesis timed out")
-                try { engine.stop() } catch (_: Exception) {}
+                try { provider.stop() } catch (_: Exception) {}
                 callback.error(TextToSpeech.ERROR_NETWORK_TIMEOUT)
                 TalkifyNotificationHelper.sendSystemNotification(
                     this@TalkifyTtsService,
@@ -732,26 +732,26 @@ class TalkifyTtsService : TextToSpeechService() {
         TtsLogger.i("TalkifyTtsService onDestroy")
         isStopped.set(true)
         try {
-            currentEngine?.stop()
+            currentProvider?.stop()
         } catch (e: android.os.RemoteException) {
-            TtsLogger.w("Remote exception during engine stop, service may be disconnecting: ${e.message}")
+            TtsLogger.w("Remote exception during provider stop, service may be disconnecting: ${e.message}")
         } catch (e: android.os.DeadObjectException) {
-            TtsLogger.w("Engine connection lost during stop, service is being destroyed: ${e.message}")
+            TtsLogger.w("Provider connection lost during stop, service is being destroyed: ${e.message}")
         } catch (e: Exception) {
-            TtsLogger.e("Unexpected error during engine stop", e)
+            TtsLogger.e("Unexpected error during provider stop", e)
         }
         try {
-            currentEngine?.release()
+            currentProvider?.release()
         } catch (e: android.os.RemoteException) {
-            TtsLogger.w("Remote exception during engine release: ${e.message}")
+            TtsLogger.w("Remote exception during provider release: ${e.message}")
         } catch (e: android.os.DeadObjectException) {
-            TtsLogger.w("Engine connection lost during release: ${e.message}")
+            TtsLogger.w("Provider connection lost during release: ${e.message}")
         } catch (e: Exception) {
-            TtsLogger.e("Unexpected error during engine release", e)
+            TtsLogger.e("Unexpected error during provider release", e)
         }
-        currentEngine = null
+        currentProvider = null
         currentConfig = null
-        currentEngineId = null
+        currentProviderId = null
         releaseWakeLock()
         stopForegroundService()
         super.onDestroy()
@@ -775,13 +775,13 @@ class TalkifyTtsService : TextToSpeechService() {
         activeContinuation = null
 
         try {
-            currentEngine?.stop()
+            currentProvider?.stop()
         } catch (e: android.os.RemoteException) {
-            TtsLogger.w("Remote exception during engine stop in onStop: ${e.message}")
+            TtsLogger.w("Remote exception during provider stop in onStop: ${e.message}")
         } catch (e: android.os.DeadObjectException) {
-            TtsLogger.w("Engine connection lost during onStop: ${e.message}")
+            TtsLogger.w("Provider connection lost during onStop: ${e.message}")
         } catch (e: Exception) {
-            TtsLogger.e("Unexpected error during engine stop in onStop", e)
+            TtsLogger.e("Unexpected error during provider stop in onStop", e)
         }
 
         if (processingSemaphore.availablePermits() == 0) {

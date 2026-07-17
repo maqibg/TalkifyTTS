@@ -1,17 +1,17 @@
-package com.github.lonepheasantwarrior.talkify.service.engine.impl
+package com.github.lonepheasantwarrior.talkify.service.provider.impl
 
 import android.speech.tts.Voice
 import com.github.lonepheasantwarrior.talkify.R
 import com.github.lonepheasantwarrior.talkify.TalkifyAppHolder
 import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlParser
-import com.github.lonepheasantwarrior.talkify.domain.model.BaseEngineConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.MiniMaxTtsConfig
 import com.github.lonepheasantwarrior.talkify.service.TtsErrorCode
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
-import com.github.lonepheasantwarrior.talkify.service.engine.AbstractTtsEngine
-import com.github.lonepheasantwarrior.talkify.service.engine.AudioConfig
-import com.github.lonepheasantwarrior.talkify.service.engine.SynthesisParams
-import com.github.lonepheasantwarrior.talkify.service.engine.TtsSynthesisListener
+import com.github.lonepheasantwarrior.talkify.service.provider.AbstractTtsProvider
+import com.github.lonepheasantwarrior.talkify.service.provider.AudioConfig
+import com.github.lonepheasantwarrior.talkify.service.provider.SynthesisParams
+import com.github.lonepheasantwarrior.talkify.service.provider.TtsSynthesisListener
 import javazoom.jl.decoder.Bitstream
 import javazoom.jl.decoder.Decoder
 import javazoom.jl.decoder.Header
@@ -40,20 +40,20 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.roundToInt
 
 /**
- * MiniMax - 语音合成引擎实现（WebSocket 版）
+ * MiniMax - 语音合成供应商实现（WebSocket 版）
  *
- * 继承 [AbstractTtsEngine]，实现 TTS 引擎接口
+ * 继承 [AbstractTtsProvider]，实现 TTS 供应商接口
  * 基于 OkHttp WebSocket 实现流式音频合成，相比 HTTP 方案显著降低首字播放延迟
  *
- * 引擎 ID：minimax-tts
+ * 供应商 ID：minimax-tts
  * 服务提供商：MiniMax
  * API 文档：https://platform.minimaxi.com/docs/llms.txt
  */
-class MiniMaxTtsEngine : AbstractTtsEngine() {
+class MiniMaxTtsProvider : AbstractTtsProvider() {
 
     companion object {
-        const val ENGINE_ID = "minimax-tts"
-        const val ENGINE_NAME = "MiniMax语音合成"
+        const val PROVIDER_ID = "minimax-tts"
+        const val PROVIDER_NAME = "MiniMax语音合成"
         private const val VOICE_NAME_SEPARATOR = "::"
         private const val WSS_URL = "wss://api.minimaxi.com/ws/v1/t2a_v2"
         private const val DEFAULT_MODEL = "speech-2.8-turbo"
@@ -65,8 +65,8 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
         private const val PIPE_BUFFER_SIZE = 65536
     }
 
-    private val engineJob = SupervisorJob()
-    private val engineScope = CoroutineScope(Dispatchers.IO + engineJob)
+    private val providerJob = SupervisorJob()
+    private val providerScope = CoroutineScope(Dispatchers.IO + providerJob)
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
@@ -110,16 +110,16 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
         }
     }
 
-    override fun getEngineId(): String = ENGINE_ID
+    override fun getProviderId(): String = PROVIDER_ID
 
-    override fun getEngineName(): String = ENGINE_NAME
+    override fun getProviderName(): String = PROVIDER_NAME
 
     override fun getAudioConfig(): AudioConfig = audioConfig
 
     override fun synthesize(
         text: String,
         params: SynthesisParams,
-        config: BaseEngineConfig,
+        config: BaseProviderConfig,
         listener: TtsSynthesisListener
     ) {
         checkNotReleased()
@@ -127,13 +127,13 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
         val miniMaxConfig = config as? MiniMaxTtsConfig
         if (miniMaxConfig == null) {
             logError("Invalid config type, expected MiniMaxTtsConfig")
-            listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_ENGINE_NOT_CONFIGURED))
+            listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_PROVIDER_NOT_CONFIGURED))
             return
         }
 
         if (miniMaxConfig.apiKey.isEmpty()) {
             logError("API Key is not configured")
-            listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_ENGINE_NOT_CONFIGURED))
+            listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_PROVIDER_NOT_CONFIGURED))
             return
         }
 
@@ -155,7 +155,7 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
         hasCompleted = false
 
         synthesisJob?.cancel()
-        synthesisJob = engineScope.launch {
+        synthesisJob = providerScope.launch {
             try {
                 listener.onSynthesisStarted()
                 performWebSocketSynthesis(text, miniMaxConfig, params, listener)
@@ -188,7 +188,7 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
             PipedInputStream(pipedOutputStream, PIPE_BUFFER_SIZE)
         }
 
-        val decodeJob = engineScope.launch(Dispatchers.Default) {
+        val decodeJob = providerScope.launch(Dispatchers.Default) {
             decodeMp3Stream(pipedInputStream, listener)
         }
 
@@ -802,7 +802,7 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
     }
 
     /**
-     * 获取引擎支持的语言代码集合
+     * 获取供应商支持的语言代码集合
      *
      * @return 支持的语言代码集合（zho, eng）
      */
@@ -919,30 +919,30 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
     }
 
     /**
-     * 释放引擎资源
+     * 释放供应商资源
      *
      * 关闭 WebSocket 连接、取消协程并释放底层资源
      */
     override fun release() {
-        logInfo("Releasing engine")
+        logInfo("Releasing provider")
         isCancelled = true
-        currentWebSocket?.close(1000, "Engine released")
+        currentWebSocket?.close(1000, "Provider released")
         currentWebSocket = null
         synthesisJob?.cancel()
         synthesisJob = null
-        engineJob.cancel()
+        providerJob.cancel()
         super.release()
     }
 
     /**
-     * 检查引擎是否已完成配置
+     * 检查供应商是否已完成配置
      *
      * 验证 API Key 是否已填写
      *
-     * @param config 引擎配置对象
+     * @param config 供应商配置对象
      * @return true 表示已配置
      */
-    override fun isConfigured(config: BaseEngineConfig?): Boolean {
+    override fun isConfigured(config: BaseProviderConfig?): Boolean {
         val miniMaxConfig = config as? MiniMaxTtsConfig
         var result = false
         if (miniMaxConfig != null) {
@@ -953,11 +953,11 @@ class MiniMaxTtsEngine : AbstractTtsEngine() {
     }
 
     /**
-     * 创建默认引擎配置
+     * 创建默认供应商配置
      *
      * @return 默认的 [MiniMaxTtsConfig] 实例
      */
-    override fun createDefaultConfig(): BaseEngineConfig {
+    override fun createDefaultConfig(): BaseProviderConfig {
         return MiniMaxTtsConfig()
     }
 

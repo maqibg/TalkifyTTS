@@ -8,9 +8,9 @@ import com.github.lonepheasantwarrior.talkify.domain.repository.AppConfigReposit
 /**
  * 基于 SharedPreferences 的应用配置仓储实现
  *
- * 存储应用级全局配置，如用户选择的引擎 ID
- * 与引擎特定配置（apiKey、voiceId）分离
- * 不与任何特定 TTS 引擎绑定
+ * 存储应用级全局配置，如用户选择的供应商 ID
+ * 与供应商特定配置（apiKey、voiceId）分离
+ * 不与任何特定 TTS 供应商绑定
  */
 class SharedPreferencesAppConfigRepository(
     context: Context
@@ -19,18 +19,38 @@ class SharedPreferencesAppConfigRepository(
     private val sharedPreferences: SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-    override fun getSelectedEngineId(): String? {
-        return sharedPreferences.getString(KEY_SELECTED_ENGINE, null)
+    init {
+        // 一次性迁移：将旧版本使用的 "selected_engine" 键迁移至新的 "selected_provider" 键，
+        // 避免已安装用户在概念更名后丢失已选择的供应商。
+        migrateLegacySelectedProviderKey()
     }
 
-    override fun saveSelectedEngineId(engineId: String) {
-        sharedPreferences.edit {
-            putString(KEY_SELECTED_ENGINE, engineId)
+    private fun migrateLegacySelectedProviderKey() {
+        if (!sharedPreferences.contains(KEY_SELECTED_PROVIDER) &&
+            sharedPreferences.contains(KEY_SELECTED_PROVIDER_LEGACY)
+        ) {
+            val legacyValue = sharedPreferences.getString(KEY_SELECTED_PROVIDER_LEGACY, null)
+            if (legacyValue != null) {
+                sharedPreferences.edit {
+                    putString(KEY_SELECTED_PROVIDER, legacyValue)
+                    remove(KEY_SELECTED_PROVIDER_LEGACY)
+                }
+            }
         }
     }
 
-    override fun hasSelectedEngine(): Boolean {
-        return sharedPreferences.contains(KEY_SELECTED_ENGINE)
+    override fun getSelectedProviderId(): String? {
+        return sharedPreferences.getString(KEY_SELECTED_PROVIDER, null)
+    }
+
+    override fun saveSelectedProviderId(providerId: String) {
+        sharedPreferences.edit {
+            putString(KEY_SELECTED_PROVIDER, providerId)
+        }
+    }
+
+    override fun hasSelectedProvider(): Boolean {
+        return sharedPreferences.contains(KEY_SELECTED_PROVIDER)
     }
 
     override fun hasRequestedNotificationPermission(): Boolean {
@@ -55,7 +75,8 @@ class SharedPreferencesAppConfigRepository(
 
     companion object {
         private const val PREFS_NAME = "talkify_app_config"
-        private const val KEY_SELECTED_ENGINE = "selected_engine"
+        private const val KEY_SELECTED_PROVIDER = "selected_provider"
+        private const val KEY_SELECTED_PROVIDER_LEGACY = "selected_engine"
         private const val KEY_HAS_REQUESTED_NOTIFICATION = "has_requested_notification"
         private const val KEY_HAS_OPENED_ABOUT_PAGE = "has_opened_about_page"
     }

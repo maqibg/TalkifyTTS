@@ -1,17 +1,17 @@
-package com.github.lonepheasantwarrior.talkify.service.engine.impl
+package com.github.lonepheasantwarrior.talkify.service.provider.impl
 
 import android.speech.tts.Voice
 import com.github.lonepheasantwarrior.talkify.R
 import com.github.lonepheasantwarrior.talkify.TalkifyAppHolder
 import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlParser
-import com.github.lonepheasantwarrior.talkify.domain.model.BaseEngineConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.TencentTtsConfig
 import com.github.lonepheasantwarrior.talkify.service.TtsErrorCode
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
-import com.github.lonepheasantwarrior.talkify.service.engine.AbstractTtsEngine
-import com.github.lonepheasantwarrior.talkify.service.engine.AudioConfig
-import com.github.lonepheasantwarrior.talkify.service.engine.SynthesisParams
-import com.github.lonepheasantwarrior.talkify.service.engine.TtsSynthesisListener
+import com.github.lonepheasantwarrior.talkify.service.provider.AbstractTtsProvider
+import com.github.lonepheasantwarrior.talkify.service.provider.AudioConfig
+import com.github.lonepheasantwarrior.talkify.service.provider.SynthesisParams
+import com.github.lonepheasantwarrior.talkify.service.provider.TtsSynthesisListener
 import com.tencent.cloud.stream.tts.FlowingSpeechSynthesizer
 import com.tencent.cloud.stream.tts.FlowingSpeechSynthesizerListener
 import com.tencent.cloud.stream.tts.FlowingSpeechSynthesizerRequest
@@ -28,11 +28,11 @@ import java.nio.ByteBuffer
 import java.util.Locale
 import java.util.UUID
 
-class TencentTtsEngine : AbstractTtsEngine() {
+class TencentTtsProvider : AbstractTtsProvider() {
 
     companion object {
-        const val ENGINE_ID = "tencent-tts"
-        const val ENGINE_NAME = "腾讯语音合成"
+        const val PROVIDER_ID = "tencent-tts"
+        const val PROVIDER_NAME = "腾讯语音合成"
         const val DEFAULT_VOICE_ID = 101027
         private const val VOICE_NAME_SEPARATOR = "::"
 
@@ -70,7 +70,7 @@ class TencentTtsEngine : AbstractTtsEngine() {
         }
     }
 
-    private val engineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val providerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     @Volatile
     private var isCancelled = false
@@ -156,25 +156,25 @@ class TencentTtsEngine : AbstractTtsEngine() {
         return voiceSampleRateMap[voiceId] ?: 16000
     }
 
-    override fun getEngineId(): String = ENGINE_ID
+    override fun getProviderId(): String = PROVIDER_ID
 
-    override fun getEngineName(): String = ENGINE_NAME
+    override fun getProviderName(): String = PROVIDER_NAME
 
     override fun synthesize(
-        text: String, params: SynthesisParams, config: BaseEngineConfig, listener: TtsSynthesisListener
+        text: String, params: SynthesisParams, config: BaseProviderConfig, listener: TtsSynthesisListener
     ) {
         checkNotReleased()
 
         val tencentConfig = config as? TencentTtsConfig
         if (tencentConfig == null) {
             logError("Invalid config type, expected TencentTtsConfig")
-            listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_ENGINE_NOT_CONFIGURED))
+            listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_PROVIDER_NOT_CONFIGURED))
             return
         }
 
         if (tencentConfig.appId.isEmpty() || tencentConfig.secretId.isEmpty() || tencentConfig.secretKey.isEmpty()) {
             logError("AppID or SecretID or SecretKey is not configured")
-            listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_ENGINE_NOT_CONFIGURED))
+            listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_PROVIDER_NOT_CONFIGURED))
             return
         }
 
@@ -209,7 +209,7 @@ class TencentTtsEngine : AbstractTtsEngine() {
 
         logDebug("Text split into ${textChunks.size} chunks")
 
-        engineScope.launch {
+        providerScope.launch {
             processChunksSequentially(textChunks, tencentConfig, params, realVoiceId, sampleRate, listener)
         }
     }
@@ -306,7 +306,7 @@ class TencentTtsEngine : AbstractTtsEngine() {
                     
                     if (firstErrorMessage == null) {
                         firstErrorMessage = getFriendlyErrorMessage(errorCode, errorMsg)
-                        engineScope.launch(Dispatchers.Main) {
+                        providerScope.launch(Dispatchers.Main) {
                             listener.onError(firstErrorMessage!!)
                         }
                     }
@@ -538,15 +538,15 @@ class TencentTtsEngine : AbstractTtsEngine() {
     }
 
     override fun release() {
-        logInfo("Releasing engine")
+        logInfo("Releasing provider")
         isCancelled = true
         currentSynthesizer?.cancel()
         currentSynthesizer = null
-        engineScope.cancel()
+        providerScope.cancel()
         super.release()
     }
 
-    override fun isConfigured(config: BaseEngineConfig?): Boolean {
+    override fun isConfigured(config: BaseProviderConfig?): Boolean {
         val tencentConfig = config as? TencentTtsConfig
         var result = false
         if (tencentConfig != null) {
@@ -558,7 +558,7 @@ class TencentTtsEngine : AbstractTtsEngine() {
         return result
     }
 
-    override fun createDefaultConfig(): BaseEngineConfig {
+    override fun createDefaultConfig(): BaseProviderConfig {
         return TencentTtsConfig()
     }
 

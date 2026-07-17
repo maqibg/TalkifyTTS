@@ -1,4 +1,4 @@
-package com.github.lonepheasantwarrior.talkify.service.engine.impl
+package com.github.lonepheasantwarrior.talkify.service.provider.impl
 
 import android.speech.tts.Voice
 import android.util.Base64
@@ -11,14 +11,14 @@ import com.alibaba.dashscope.exception.NoApiKeyException
 import com.alibaba.dashscope.exception.UploadFileException
 import com.alibaba.dashscope.utils.Constants
 import com.github.lonepheasantwarrior.talkify.R
-import com.github.lonepheasantwarrior.talkify.domain.model.BaseEngineConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.Qwen3TtsConfig
 import com.github.lonepheasantwarrior.talkify.service.TtsErrorCode
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
-import com.github.lonepheasantwarrior.talkify.service.engine.AbstractTtsEngine
-import com.github.lonepheasantwarrior.talkify.service.engine.AudioConfig
-import com.github.lonepheasantwarrior.talkify.service.engine.SynthesisParams
-import com.github.lonepheasantwarrior.talkify.service.engine.TtsSynthesisListener
+import com.github.lonepheasantwarrior.talkify.service.provider.AbstractTtsProvider
+import com.github.lonepheasantwarrior.talkify.service.provider.AudioConfig
+import com.github.lonepheasantwarrior.talkify.service.provider.SynthesisParams
+import com.github.lonepheasantwarrior.talkify.service.provider.TtsSynthesisListener
 import io.reactivex.Flowable
 import io.reactivex.disposables.Disposable
 import io.reactivex.subscribers.DisposableSubscriber
@@ -27,19 +27,19 @@ import java.net.SocketTimeoutException
 import java.util.Locale
 
 /**
- * 阿里云百炼 - 通义千问3语音合成引擎实现
+ * 阿里云百炼 - 通义千问3语音合成供应商实现
  *
- * 继承 [AbstractTtsEngine]，实现 TTS 引擎接口
+ * 继承 [AbstractTtsProvider]，实现 TTS 供应商接口
  * 支持流式音频合成，将音频数据块实时回调给系统
  *
- * 引擎 ID：qwen3-tts
+ * 供应商 ID：qwen3-tts
  * 服务提供商：阿里云百炼
  */
-class Qwen3TtsEngine : AbstractTtsEngine() {
+class Qwen3TtsProvider : AbstractTtsProvider() {
 
     companion object {
-        const val ENGINE_ID = "qwen3-tts"
-        const val ENGINE_NAME = "通义千问3语音合成"
+        const val PROVIDER_ID = "qwen3-tts"
+        const val PROVIDER_NAME = "通义千问3语音合成"
 
         const val MODEL_QWEN3_TTS_FLASH = "qwen3-tts-flash"
 
@@ -70,25 +70,25 @@ class Qwen3TtsEngine : AbstractTtsEngine() {
         Constants.baseHttpApiUrl = "https://dashscope.aliyuncs.com/api/v1"
     }
 
-    override fun getEngineId(): String = ENGINE_ID
+    override fun getProviderId(): String = PROVIDER_ID
 
-    override fun getEngineName(): String = ENGINE_NAME
+    override fun getProviderName(): String = PROVIDER_NAME
 
     override fun synthesize(
-        text: String, params: SynthesisParams, config: BaseEngineConfig, listener: TtsSynthesisListener
+        text: String, params: SynthesisParams, config: BaseProviderConfig, listener: TtsSynthesisListener
     ) {
         checkNotReleased()
 
         val qwenConfig = config as? Qwen3TtsConfig
         if (qwenConfig == null) {
             logError("Invalid config type, expected Qwen3TtsConfig")
-            listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_ENGINE_NOT_CONFIGURED))
+            listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_PROVIDER_NOT_CONFIGURED))
             return
         }
 
         if (qwenConfig.apiKey.isEmpty()) {
             logError("API key is not configured")
-            listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_ENGINE_NOT_CONFIGURED))
+            listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_PROVIDER_NOT_CONFIGURED))
             return
         }
 
@@ -150,7 +150,7 @@ class Qwen3TtsEngine : AbstractTtsEngine() {
     private fun mapExceptionToErrorCode(e: Exception): Pair<Int, String> {
         return when (e) {
             is NoApiKeyException -> {
-                TtsErrorCode.ERROR_ENGINE_NOT_CONFIGURED to "API Key 未配置"
+                TtsErrorCode.ERROR_PROVIDER_NOT_CONFIGURED to "API Key 未配置"
             }
 
             is UploadFileException -> {
@@ -459,10 +459,10 @@ class Qwen3TtsEngine : AbstractTtsEngine() {
         val voices = mutableListOf<Voice>()
 
         for (langCode in getSupportedLanguages()) {
-            for (engineVoice in AudioParameters.Voice.entries) {
+            for (providerVoice in AudioParameters.Voice.entries) {
                 voices.add(
                     Voice(
-                        "${engineVoice.value}$VOICE_NAME_SEPARATOR$langCode",
+                        "${providerVoice.value}$VOICE_NAME_SEPARATOR$langCode",
                         Locale.forLanguageTag(langCode),
                         Voice.QUALITY_NORMAL,
                         Voice.LATENCY_NORMAL,
@@ -506,14 +506,14 @@ class Qwen3TtsEngine : AbstractTtsEngine() {
     }
 
     override fun release() {
-        logInfo("Releasing engine")
+        logInfo("Releasing provider")
         isCancelled = true
         currentDisposable?.dispose()
         currentDisposable = null
         super.release()
     }
 
-    override fun isConfigured(config: BaseEngineConfig?): Boolean {
+    override fun isConfigured(config: BaseProviderConfig?): Boolean {
         val qwenConfig = config as? Qwen3TtsConfig
         var result = false
         if (qwenConfig != null) {
@@ -523,7 +523,7 @@ class Qwen3TtsEngine : AbstractTtsEngine() {
         return result
     }
 
-    override fun createDefaultConfig(): BaseEngineConfig {
+    override fun createDefaultConfig(): BaseProviderConfig {
         return Qwen3TtsConfig()
     }
 

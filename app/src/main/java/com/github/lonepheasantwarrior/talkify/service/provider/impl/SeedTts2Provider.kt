@@ -1,18 +1,18 @@
-package com.github.lonepheasantwarrior.talkify.service.engine.impl
+package com.github.lonepheasantwarrior.talkify.service.provider.impl
 
 import android.speech.tts.Voice
 import android.util.Base64
 import com.github.lonepheasantwarrior.talkify.R
 import com.github.lonepheasantwarrior.talkify.TalkifyAppHolder
 import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlParser
-import com.github.lonepheasantwarrior.talkify.domain.model.BaseEngineConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.SeedTts2Config
 import com.github.lonepheasantwarrior.talkify.service.TtsErrorCode
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
-import com.github.lonepheasantwarrior.talkify.service.engine.AbstractTtsEngine
-import com.github.lonepheasantwarrior.talkify.service.engine.AudioConfig
-import com.github.lonepheasantwarrior.talkify.service.engine.SynthesisParams
-import com.github.lonepheasantwarrior.talkify.service.engine.TtsSynthesisListener
+import com.github.lonepheasantwarrior.talkify.service.provider.AbstractTtsProvider
+import com.github.lonepheasantwarrior.talkify.service.provider.AudioConfig
+import com.github.lonepheasantwarrior.talkify.service.provider.SynthesisParams
+import com.github.lonepheasantwarrior.talkify.service.provider.TtsSynthesisListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -34,21 +34,21 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
 /**
- * 火山引擎 - 豆包语音合成 2.0 引擎实现
+ * 火山引擎 - 豆包语音合成 2.0 供应商实现
  *
- * 继承 [AbstractTtsEngine]，实现 TTS 引擎接口
+ * 继承 [AbstractTtsProvider]，实现 TTS 供应商接口
  * 基于 OkHttp 实现 HTTP 流式音频合成，支持连接复用
  * 将音频数据块实时回调给系统
  *
- * 引擎 ID：seed-tts-2.0
+ * 供应商 ID：seed-tts-2.0
  * 服务提供商：火山引擎
  * API 文档：https://www.volcengine.com/docs/6561/1598757
  */
-class SeedTts2Engine : AbstractTtsEngine() {
+class SeedTts2Provider : AbstractTtsProvider() {
 
     companion object {
-        const val ENGINE_ID = "seed-tts-2.0"
-        const val ENGINE_NAME = "豆包语音合成2.0"
+        const val PROVIDER_ID = "seed-tts-2.0"
+        const val PROVIDER_NAME = "豆包语音合成2.0"
         private const val VOICE_NAME_SEPARATOR = "::"
         private const val API_URL = "https://openspeech.bytedance.com/api/v3/tts/unidirectional"
         private const val RESOURCE_ID = "seed-tts-2.0"
@@ -78,7 +78,7 @@ class SeedTts2Engine : AbstractTtsEngine() {
     }
 
     // 协程作用域用于异步处理
-    private val engineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val providerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     @Volatile
     private var isCancelled = false
@@ -117,27 +117,27 @@ class SeedTts2Engine : AbstractTtsEngine() {
         }
     }
 
-    override fun getEngineId(): String = ENGINE_ID
+    override fun getProviderId(): String = PROVIDER_ID
 
-    override fun getEngineName(): String = ENGINE_NAME
+    override fun getProviderName(): String = PROVIDER_NAME
 
     override fun getAudioConfig(): AudioConfig = audioConfig
 
     override fun synthesize(
-        text: String, params: SynthesisParams, config: BaseEngineConfig, listener: TtsSynthesisListener
+        text: String, params: SynthesisParams, config: BaseProviderConfig, listener: TtsSynthesisListener
     ) {
         checkNotReleased()
 
         val seedConfig = config as? SeedTts2Config
         if (seedConfig == null) {
             logError("Invalid config type, expected SeedTts2Config")
-            listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_ENGINE_NOT_CONFIGURED))
+            listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_PROVIDER_NOT_CONFIGURED))
             return
         }
 
         if (seedConfig.apiKey.isEmpty()) {
             logError("API Key is not configured")
-            listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_ENGINE_NOT_CONFIGURED))
+            listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_PROVIDER_NOT_CONFIGURED))
             return
         }
 
@@ -170,7 +170,7 @@ class SeedTts2Engine : AbstractTtsEngine() {
         logDebug("Text split into ${textChunks.size} chunks")
 
         // 使用协程顺序处理所有文本块
-        engineScope.launch {
+        providerScope.launch {
             processChunksSequentially(textChunks, seedConfig, params, listener)
         }
     }
@@ -547,7 +547,7 @@ class SeedTts2Engine : AbstractTtsEngine() {
 
     /**
      * 将文本分割为块
-     * 参考 Qwen3TtsEngine 的实现
+     * 参考 Qwen3TtsProvider 的实现
      */
     private fun splitTextIntoChunks(text: String, maxLength: Int): List<String> {
         if (text.isEmpty()) return emptyList()
@@ -699,15 +699,15 @@ class SeedTts2Engine : AbstractTtsEngine() {
     }
 
     override fun release() {
-        logInfo("Releasing engine")
+        logInfo("Releasing provider")
         isCancelled = true
         currentCall?.cancel()
         currentCall = null
-        engineScope.cancel()
+        providerScope.cancel()
         super.release()
     }
 
-    override fun isConfigured(config: BaseEngineConfig?): Boolean {
+    override fun isConfigured(config: BaseProviderConfig?): Boolean {
         val seedConfig = config as? SeedTts2Config
         var result = false
         if (seedConfig != null) {
@@ -717,7 +717,7 @@ class SeedTts2Engine : AbstractTtsEngine() {
         return result
     }
 
-    override fun createDefaultConfig(): BaseEngineConfig {
+    override fun createDefaultConfig(): BaseProviderConfig {
         return SeedTts2Config()
     }
 

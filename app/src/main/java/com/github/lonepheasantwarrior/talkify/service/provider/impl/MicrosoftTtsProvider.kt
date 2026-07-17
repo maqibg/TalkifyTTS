@@ -1,16 +1,16 @@
-package com.github.lonepheasantwarrior.talkify.service.engine.impl
+package com.github.lonepheasantwarrior.talkify.service.provider.impl
 
 import android.content.Context
 import android.speech.tts.Voice
 import com.github.lonepheasantwarrior.talkify.R
-import com.github.lonepheasantwarrior.talkify.domain.model.BaseEngineConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.MicrosoftTtsConfig
 import com.github.lonepheasantwarrior.talkify.service.TtsErrorCode
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
-import com.github.lonepheasantwarrior.talkify.service.engine.AbstractTtsEngine
-import com.github.lonepheasantwarrior.talkify.service.engine.AudioConfig
-import com.github.lonepheasantwarrior.talkify.service.engine.SynthesisParams
-import com.github.lonepheasantwarrior.talkify.service.engine.TtsSynthesisListener
+import com.github.lonepheasantwarrior.talkify.service.provider.AbstractTtsProvider
+import com.github.lonepheasantwarrior.talkify.service.provider.AudioConfig
+import com.github.lonepheasantwarrior.talkify.service.provider.SynthesisParams
+import com.github.lonepheasantwarrior.talkify.service.provider.TtsSynthesisListener
 import javazoom.jl.decoder.Bitstream
 import javazoom.jl.decoder.Decoder
 import javazoom.jl.decoder.Header
@@ -49,9 +49,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.min
 
 /**
- * 微软语音合成引擎实现
+ * 微软语音合成供应商实现
  *
- * 继承 [AbstractTtsEngine]，实现 TTS 引擎接口
+ * 继承 [AbstractTtsProvider]，实现 TTS 供应商接口
  * 支持真正的流式音频合成，边接收边播放
  *
  * 核心优化：
@@ -62,11 +62,11 @@ import kotlin.math.min
  *
  * 服务提供商：Azure
  */
-class MicrosoftTtsEngine : AbstractTtsEngine() {
+class MicrosoftTtsProvider : AbstractTtsProvider() {
 
     companion object {
-        const val ENGINE_ID = "microsoft-tts"
-        const val ENGINE_NAME = "微软语音合成"
+        const val PROVIDER_ID = "microsoft-tts"
+        const val PROVIDER_NAME = "微软语音合成"
 
         private const val BASE_URL = "speech.platform.bing.com/consumer/speech/synthesize/readaloud"
         private const val TRUSTED_CLIENT_TOKEN = "6A5AA1D4EAFF4E9FB37E23D68491D6F4"
@@ -258,14 +258,14 @@ class MicrosoftTtsEngine : AbstractTtsEngine() {
     private var isCancelled = false
     private var hasCompleted = false
 
-    private val engineJob = SupervisorJob()
-    private val engineScope = CoroutineScope(Dispatchers.IO + engineJob)
+    private val providerJob = SupervisorJob()
+    private val providerScope = CoroutineScope(Dispatchers.IO + providerJob)
 
     private var synthesisJob: Job? = null
 
     init {
         // DNS 预热：前置网络层握手准备，显著降低首次合成请求时的 DNS 解析延迟
-        engineScope.launch {
+        providerScope.launch {
             try {
                 java.net.InetAddress.getByName("speech.platform.bing.com")
             } catch (_: Exception) {
@@ -274,18 +274,18 @@ class MicrosoftTtsEngine : AbstractTtsEngine() {
         }
     }
 
-    override fun getEngineId(): String = ENGINE_ID
-    override fun getEngineName(): String = ENGINE_NAME
+    override fun getProviderId(): String = PROVIDER_ID
+    override fun getProviderName(): String = PROVIDER_NAME
 
     override fun synthesize(
-        text: String, params: SynthesisParams, config: BaseEngineConfig, listener: TtsSynthesisListener
+        text: String, params: SynthesisParams, config: BaseProviderConfig, listener: TtsSynthesisListener
     ) {
         checkNotReleased()
 
         val msConfig = config as? MicrosoftTtsConfig
         if (msConfig == null) {
             logError("Invalid config type, expected MicrosoftTtsConfig")
-            listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_ENGINE_NOT_CONFIGURED))
+            listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_PROVIDER_NOT_CONFIGURED))
             return
         }
 
@@ -303,7 +303,7 @@ class MicrosoftTtsEngine : AbstractTtsEngine() {
         isCancelled = false
         hasCompleted = false
 
-        synthesisJob = engineScope.launch {
+        synthesisJob = providerScope.launch {
             try {
                 listener.onSynthesisStarted()
                 processChunks(textChunks, params, msConfig, listener)
@@ -345,7 +345,7 @@ class MicrosoftTtsEngine : AbstractTtsEngine() {
         }
 
         // 解码是 CPU 密集型操作，调度至 Default
-        val decodeJob = engineScope.launch(Dispatchers.Default) {
+        val decodeJob = providerScope.launch(Dispatchers.Default) {
             decodeMp3Stream(pipedInputStream, listener)
         }
 
@@ -470,7 +470,7 @@ class MicrosoftTtsEngine : AbstractTtsEngine() {
      */
     private fun scheduleIdleTimeout() {
         idleTimeoutJob?.cancel()
-        idleTimeoutJob = engineScope.launch {
+        idleTimeoutJob = providerScope.launch {
             kotlinx.coroutines.delay(CONNECTION_IDLE_TIMEOUT_MS)
             val elapsed = System.currentTimeMillis() - lastUsedTimestamp
             if (elapsed >= CONNECTION_IDLE_TIMEOUT_MS) {
@@ -897,7 +897,7 @@ class MicrosoftTtsEngine : AbstractTtsEngine() {
         return if (pitchHz >= 0) "+${pitchHz}Hz" else "${pitchHz}Hz"
     }
 
-    // ==================== 引擎元数据 ====================
+    // ==================== 供应商元数据 ====================
 
     override fun getSupportedLanguages(): Set<String> {
         return SUPPORTED_LANGUAGES.toSet()
@@ -943,22 +943,22 @@ class MicrosoftTtsEngine : AbstractTtsEngine() {
     }
 
     override fun release() {
-        logInfo("Releasing engine")
+        logInfo("Releasing provider")
         isCancelled = true
         closeConnection()
         synthesisJob?.cancel()
         synthesisJob = null
-        engineJob.cancel()
+        providerJob.cancel()
         super.release()
     }
 
-    override fun isConfigured(config: BaseEngineConfig?): Boolean {
+    override fun isConfigured(config: BaseProviderConfig?): Boolean {
         val result = config is MicrosoftTtsConfig
         TtsLogger.d("$tag: isConfigured = $result")
         return result
     }
 
-    override fun createDefaultConfig(): BaseEngineConfig {
+    override fun createDefaultConfig(): BaseProviderConfig {
         return MicrosoftTtsConfig()
     }
 

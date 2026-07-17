@@ -1,7 +1,7 @@
-package com.github.lonepheasantwarrior.talkify.service.engine
+package com.github.lonepheasantwarrior.talkify.service.provider
 
 import android.speech.tts.Voice
-import com.github.lonepheasantwarrior.talkify.domain.model.BaseEngineConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
 
 /**
  * TTS 合成参数
@@ -13,7 +13,7 @@ import com.github.lonepheasantwarrior.talkify.domain.model.BaseEngineConfig
  * @param speechRate 语速，范围 [0, 200]，100 为默认值（正常语速），值越大语速越快
  * @param volume 音量，范围 [0.0, 1.0]，1.0 为默认值（最大音量）
  * @param audioFormat 音频格式（如 AudioFormat.ENCODING_PCM_16BIT）
- * @param language 语言类型（如 "Chinese", "English" 等，null 表示使用引擎默认值）
+ * @param language 语言类型（如 "Chinese", "English" 等，null 表示使用供应商默认值）
  */
 data class SynthesisParams(
     val pitch: Float = 100.0f,
@@ -24,48 +24,48 @@ data class SynthesisParams(
 )
 
 /**
- * TTS 引擎 API 接口
+ * TTS 供应商 API 接口
  *
- * 定义语音合成引擎必须实现的核心方法
- * 采用接口设计，解耦引擎实现与调用方逻辑
- * 支持多引擎接入，每种引擎实现此接口即可
+ * 定义语音合成供应商必须实现的核心方法
+ * 采用接口设计，解耦供应商实现与调用方逻辑
+ * 支持多供应商接入，每种供应商实现此接口即可
  */
-interface TtsEngineApi {
+interface TtsProviderApi {
 
     /**
-     * 获取引擎 ID
+     * 获取供应商 ID
      *
-     * @return 引擎唯一标识符
+     * @return 供应商唯一标识符
      */
-    fun getEngineId(): String
+    fun getProviderId(): String
 
     /**
-     * 获取引擎显示名称
+     * 获取供应商显示名称
      *
-     * @return 引擎显示名称
+     * @return 供应商显示名称
      */
-    fun getEngineName(): String
+    fun getProviderName(): String
 
     /**
-     * 检查引擎是否已配置（API Key 等）
+     * 检查供应商是否已配置（API Key 等）
      *
-     * @param config 引擎配置
+     * @param config 供应商配置
      * @return 是否已配置
      */
-    fun isConfigured(config: BaseEngineConfig?): Boolean
+    fun isConfigured(config: BaseProviderConfig?): Boolean
 
     /**
      * 合成语音
      *
      * @param text 要合成的文本
      * @param params 合成参数（音调、音量、语速等）
-     * @param config 引擎配置
+     * @param config 供应商配置
      * @param listener 合成结果监听器
      */
     fun synthesize(
         text: String,
         params: SynthesisParams,
-        config: BaseEngineConfig,
+        config: BaseProviderConfig,
         listener: TtsSynthesisListener
     )
 
@@ -75,63 +75,63 @@ interface TtsEngineApi {
     fun stop()
 
     /**
-     * 释放引擎资源
+     * 释放供应商资源
      */
     fun release()
 
     /**
-     * 获取引擎音频配置
+     * 获取供应商音频配置
      *
      * @return 音频配置，包含采样率、格式、通道数等
      */
     fun getAudioConfig(): AudioConfig
 
     /**
-     * 获取引擎支持的语言
+     * 获取供应商支持的语言
      *
      * @return 支持的语言代码集合
      */
     fun getSupportedLanguages(): Set<String>
 
     /**
-     * 获取引擎支持的默认语言
+     * 获取供应商支持的默认语言
      */
     fun getDefaultLanguages(): Array<String>
 
     /**
-     * 获取引擎支持的声音
+     * 获取供应商支持的声音
      */
     fun getSupportedVoices(): List<Voice>
 
     /**
-     * 获取引擎的默认声音ID
+     * 获取供应商的默认声音ID
      */
     fun getDefaultVoiceId(lang: String?, country: String?, variant: String?, currentVoiceId: String?): String
 
     /**
-     * 检查引擎是否支持目标声音ID（声音 ID 是否合法）
+     * 检查供应商是否支持目标声音ID（声音 ID 是否合法）
      */
     fun isVoiceIdCorrect(voiceId: String?): Boolean
 
     /**
-     * 创建引擎的默认配置实例
+     * 创建供应商的默认配置实例
      *
-     * 用于创建该引擎类型的空配置对象
+     * 用于创建该供应商类型的空配置对象
      * 供配置编辑界面动态创建正确的配置类型
      *
-     * @return 引擎默认配置实例
+     * @return 供应商默认配置实例
      */
-    fun createDefaultConfig(): BaseEngineConfig
+    fun createDefaultConfig(): BaseProviderConfig
 
     /**
      * 获取配置项标签
      *
      * 用于 UI 层显示配置项的本地化标签
-     * 每个引擎可以定义自己的配置项标签
+     * 每个供应商可以定义自己的配置项标签
      *
      * @param configKey 配置项键名
      * @param context Android Context 用于获取字符串资源
-     * @return 配置项的本地化标签，若引擎不支持该配置项则返回 null
+     * @return 配置项的本地化标签，若供应商不支持该配置项则返回 null
      */
     fun getConfigLabel(configKey: String, context: android.content.Context): String?
 }

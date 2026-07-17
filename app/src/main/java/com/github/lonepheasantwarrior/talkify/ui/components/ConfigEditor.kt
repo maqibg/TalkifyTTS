@@ -35,9 +35,9 @@ import com.github.lonepheasantwarrior.talkify.domain.repository.VoiceInfo
 /**
  * 配置编辑器组件
  *
- * 展示并编辑引擎配置，包括 API Key 输入和声音选择
+ * 展示并编辑供应商配置，包括 API Key 输入和声音选择
  *
- * @param engineName 引擎名称
+ * @param providerName 供应商名称
  * @param configItems 配置项列表
  * @param availableVoices 可选声音列表
  * @param onItemValueChange 配置项值变化的回调
@@ -48,7 +48,7 @@ import com.github.lonepheasantwarrior.talkify.domain.repository.VoiceInfo
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConfigEditor(
-    engineName: String,
+    providerName: String,
     configItems: List<ConfigItem>,
     availableVoices: List<VoiceInfo>,
     onItemValueChange: (ConfigItem, String) -> Unit,
@@ -72,7 +72,7 @@ fun ConfigEditor(
                 .verticalScroll(rememberScrollState())
         ) {
             Text(
-                text = stringResource(R.string.config_title_format, engineName),
+                text = stringResource(R.string.config_title_format, providerName),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )

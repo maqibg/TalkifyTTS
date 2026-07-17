@@ -1,9 +1,9 @@
-package com.github.lonepheasantwarrior.talkify.infrastructure.engine.repo
+package com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo
 
 import android.content.Context
 import com.github.lonepheasantwarrior.talkify.R
-import com.github.lonepheasantwarrior.talkify.domain.model.EngineIds
-import com.github.lonepheasantwarrior.talkify.domain.model.TtsEngine
+import com.github.lonepheasantwarrior.talkify.domain.model.ProviderIds
+import com.github.lonepheasantwarrior.talkify.domain.model.TtsProvider
 import com.github.lonepheasantwarrior.talkify.domain.repository.VoiceInfo
 import com.github.lonepheasantwarrior.talkify.domain.repository.VoiceRepository
 import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlEntry
@@ -23,8 +23,8 @@ class TencentTtsVoiceRepository(
         VoiceXmlParser.parse(context, R.xml.tencent_tts_voices)
     }
 
-    override suspend fun getVoicesForEngine(engine: TtsEngine): List<VoiceInfo> {
-        if (engine.id != EngineIds.TencentTts.value) return emptyList()
+    override suspend fun getVoicesForProvider(provider: TtsProvider): List<VoiceInfo> {
+        if (provider.id != ProviderIds.TencentTts.value) return emptyList()
         return voices.map {
             VoiceInfo(
                 voiceId = it.id,

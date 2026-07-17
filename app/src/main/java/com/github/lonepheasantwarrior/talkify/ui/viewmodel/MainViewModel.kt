@@ -5,7 +5,7 @@ import android.content.Intent
 import android.provider.Settings
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.lonepheasantwarrior.talkify.domain.model.BaseEngineConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.UpdateCheckResult
 import com.github.lonepheasantwarrior.talkify.domain.model.UpdateInfo
 import com.github.lonepheasantwarrior.talkify.domain.repository.AppConfigRepository
@@ -65,7 +65,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     // --- Demo 试听状态 ---
     private var demoService: TalkifyTtsDemoService? = null
-    private var currentDemoEngineId: String? = null
+    private var currentDemoProviderId: String? = null
 
     private val _isDemoPlaying = MutableStateFlow(false)
     val isDemoPlaying: StateFlow<Boolean> = _isDemoPlaying.asStateFlow()
@@ -73,8 +73,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _demoErrorMessage = MutableStateFlow<String?>(null)
     val demoErrorMessage: StateFlow<String?> = _demoErrorMessage.asStateFlow()
 
-    private val _isDefaultEngine = MutableStateFlow(true)
-    val isDefaultEngine: StateFlow<Boolean> = _isDefaultEngine.asStateFlow()
+    private val _isDefaultProvider = MutableStateFlow(true)
+    val isDefaultProvider: StateFlow<Boolean> = _isDefaultProvider.asStateFlow()
 
     init {
         // ViewModel 初始化时自动开始检查流程
@@ -100,11 +100,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     // --- Demo 功能 ---
 
-    fun playDemo(engineId: String, text: String, config: BaseEngineConfig) {
-        if (demoService == null || currentDemoEngineId != engineId) {
-            TtsLogger.d(logTag) { "Initializing Demo Service for engine: $engineId" }
+    fun playDemo(providerId: String, text: String, config: BaseProviderConfig) {
+        if (demoService == null || currentDemoProviderId != providerId) {
+            TtsLogger.d(logTag) { "Initializing Demo Service for provider: $providerId" }
             demoService?.release()
-            demoService = TalkifyTtsDemoService(engineId).apply {
+            demoService = TalkifyTtsDemoService(providerId).apply {
                 setStateListener { state, errorMessage ->
                     _isDemoPlaying.value = state == TalkifyTtsDemoService.STATE_PLAYING
                     if (state == TalkifyTtsDemoService.STATE_ERROR) {
@@ -112,7 +112,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 }
             }
-            currentDemoEngineId = engineId
+            currentDemoProviderId = providerId
         }
 
         // 清除之前的错误信息
@@ -220,32 +220,32 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private fun finishStartup() {
         TtsLogger.i(logTag) { "Startup sequence completed." }
         _uiState.value = StartupState.Completed
-        checkDefaultEngine()
+        checkDefaultProvider()
     }
 
-    fun refreshDefaultEngineStatus() {
-        checkDefaultEngine()
+    fun refreshDefaultProviderStatus() {
+        checkDefaultProvider()
     }
 
-    private fun checkDefaultEngine() {
+    private fun checkDefaultProvider() {
         viewModelScope.launch {
             val isDefault = withContext(Dispatchers.IO) {
                 try {
                     val tts = android.speech.tts.TextToSpeech(context, null)
-                    val engineName = tts.defaultEngine
+                    val providerName = tts.defaultEngine
                     tts.shutdown()
 
-                    TtsLogger.d(logTag) { "Default TTS engine: $engineName" }
+                    TtsLogger.d(logTag) { "Default TTS provider: $providerName" }
 
                     val talkifyPackageName = "com.github.lonepheasantwarrior.talkify"
-                    engineName == talkifyPackageName || engineName?.contains("talkify") == true
+                    providerName == talkifyPackageName || providerName?.contains("talkify") == true
                 } catch (e: Exception) {
-                    TtsLogger.e("Failed to get default TTS engine", e, logTag)
+                    TtsLogger.e("Failed to get default TTS provider", e, logTag)
                     false
                 }
             }
-            _isDefaultEngine.value = isDefault
-            TtsLogger.i(logTag) { "Talkify is default engine: $isDefault" }
+            _isDefaultProvider.value = isDefault
+            TtsLogger.i(logTag) { "Talkify is default provider: $isDefault" }
         }
     }
 

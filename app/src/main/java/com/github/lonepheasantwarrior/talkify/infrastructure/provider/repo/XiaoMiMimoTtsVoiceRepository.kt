@@ -1,9 +1,9 @@
-package com.github.lonepheasantwarrior.talkify.infrastructure.engine.repo
+package com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo
 
 import android.content.Context
 import com.github.lonepheasantwarrior.talkify.R
-import com.github.lonepheasantwarrior.talkify.domain.model.EngineIds
-import com.github.lonepheasantwarrior.talkify.domain.model.TtsEngine
+import com.github.lonepheasantwarrior.talkify.domain.model.ProviderIds
+import com.github.lonepheasantwarrior.talkify.domain.model.TtsProvider
 import com.github.lonepheasantwarrior.talkify.domain.repository.VoiceInfo
 import com.github.lonepheasantwarrior.talkify.domain.repository.VoiceRepository
 import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlEntry
@@ -17,13 +17,13 @@ class XiaoMiMimoTtsVoiceRepository(
         VoiceXmlParser.parse(context, R.xml.xiaomi_mimo_voices)
     }
 
-    override suspend fun getVoicesForEngine(engine: TtsEngine): List<VoiceInfo> {
-        if (engine.id != EngineIds.XiaoMiMimo.value) return emptyList()
+    override suspend fun getVoicesForProvider(provider: TtsProvider): List<VoiceInfo> {
+        if (provider.id != ProviderIds.XiaoMiMimo.value) return emptyList()
         return voices.map { VoiceInfo(voiceId = it.id, displayName = it.displayName) }
     }
 
-    fun getVoicesWithDescription(engine: TtsEngine): List<VoiceInfoWithDescription> {
-        if (engine.id != EngineIds.XiaoMiMimo.value) return emptyList()
+    fun getVoicesWithDescription(provider: TtsProvider): List<VoiceInfoWithDescription> {
+        if (provider.id != ProviderIds.XiaoMiMimo.value) return emptyList()
         return voices.map {
             VoiceInfoWithDescription(voiceId = it.id, displayName = it.displayName, description = it.description)
         }

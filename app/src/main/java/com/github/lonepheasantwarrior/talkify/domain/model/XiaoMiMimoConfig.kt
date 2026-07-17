@@ -1,9 +1,9 @@
 package com.github.lonepheasantwarrior.talkify.domain.model
 
 /**
- * 小米 MiMo 语音合成引擎配置
+ * 小米 MiMo 语音合成供应商配置
  *
- * 继承 [BaseEngineConfig]，封装小米 MiMo 引擎所需的配置信息
+ * 继承 [BaseProviderConfig]，封装小米 MiMo 供应商所需的配置信息
  * 使用小米服务的 API Key 进行认证
  *
  * @property voiceId 声音 ID，如 "mimo_default"
@@ -13,4 +13,4 @@ package com.github.lonepheasantwarrior.talkify.domain.model
 data class XiaoMiMimoConfig(
     override val voiceId: String = "",
     val apiKey: String = ""
-) : BaseEngineConfig(voiceId)
+) : BaseProviderConfig(voiceId)

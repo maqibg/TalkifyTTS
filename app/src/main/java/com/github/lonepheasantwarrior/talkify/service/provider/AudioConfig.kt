@@ -1,12 +1,12 @@
-package com.github.lonepheasantwarrior.talkify.service.engine
+package com.github.lonepheasantwarrior.talkify.service.provider
 
 import android.media.AudioFormat
 
 /**
- * TTS 引擎音频配置
+ * TTS 供应商音频配置
  *
- * 封装引擎特定的音频参数，支持不同引擎使用不同的音频格式
- * 便于多引擎适配和配置管理
+ * 封装供应商特定的音频参数，支持不同供应商使用不同的音频格式
+ * 便于多供应商适配和配置管理
  *
  * @param sampleRate 采样率（Hz），默认 24000
  * @param audioFormat 音频格式（AudioFormat.ENCODING_PCM_16BIT 等）

@@ -1,8 +1,8 @@
-package com.github.lonepheasantwarrior.talkify.service.engine
+package com.github.lonepheasantwarrior.talkify.service.provider
 
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
 
-abstract class AbstractTtsEngine : TtsEngineApi {
+abstract class AbstractTtsProvider : TtsProviderApi {
 
     protected var isReleased: Boolean = false
         private set
@@ -25,7 +25,7 @@ abstract class AbstractTtsEngine : TtsEngineApi {
 
     protected fun checkNotReleased() {
         if (isReleased) {
-            val message = "Engine has been released"
+            val message = "Provider has been released"
             TtsLogger.e("$tag: $message")
             throw IllegalStateException(message)
         }

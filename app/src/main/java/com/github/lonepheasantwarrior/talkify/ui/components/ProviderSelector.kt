@@ -26,14 +26,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.github.lonepheasantwarrior.talkify.R
-import com.github.lonepheasantwarrior.talkify.domain.model.TtsEngine
+import com.github.lonepheasantwarrior.talkify.domain.model.TtsProvider
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EngineSelector(
-    currentEngine: TtsEngine,
-    availableEngines: List<TtsEngine>,
-    onEngineSelected: (TtsEngine) -> Unit,
+fun ProviderSelector(
+    currentProvider: TtsProvider,
+    availableProviders: List<TtsProvider>,
+    onProviderSelected: (TtsProvider) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showBottomSheet by remember { mutableStateOf(false) }
@@ -49,7 +49,7 @@ fun EngineSelector(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = stringResource(R.string.synthesis_engine),
+                text = stringResource(R.string.synthesis_provider),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -61,14 +61,14 @@ fun EngineSelector(
                     .padding(top = 8.dp)
             ) {
                 Text(
-                    text = currentEngine.name,
+                    text = currentProvider.name,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
 
             Text(
-                text = stringResource(R.string.provider_format, currentEngine.provider),
+                text = stringResource(R.string.provider_format, currentProvider.provider),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp)
@@ -87,20 +87,20 @@ fun EngineSelector(
                     .padding(16.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.select_engine),
+                    text = stringResource(R.string.select_provider),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 
-                // 竖向排列的引擎选择列表
-                availableEngines.forEach { engine ->
-                    val isSelected = engine.id == currentEngine.id
+                // 竖向排列的供应商选择列表
+                availableProviders.forEach { provider ->
+                    val isSelected = provider.id == currentProvider.id
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 4.dp)
                             .clickable {
-                                onEngineSelected(engine)
+                                onProviderSelected(provider)
                                 showBottomSheet = false
                             },
                         colors = CardDefaults.cardColors(
@@ -120,14 +120,14 @@ fun EngineSelector(
                             RadioButton(
                                 selected = isSelected,
                                 onClick = {
-                                    onEngineSelected(engine)
+                                    onProviderSelected(provider)
                                     showBottomSheet = false
                                 }
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
-                                    text = engine.name,
+                                    text = provider.name,
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = if (isSelected) {
                                         MaterialTheme.colorScheme.onPrimaryContainer
@@ -136,7 +136,7 @@ fun EngineSelector(
                                     }
                                 )
                                 Text(
-                                    text = engine.provider,
+                                    text = provider.provider,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = if (isSelected) {
                                         MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
