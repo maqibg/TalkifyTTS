@@ -162,6 +162,9 @@ fun MainScreen(
         mutableStateOf(defaultProvider)
     }
 
+    // 配置版本号，用于在配置保存后触发供应商列表展示刷新
+    var configVersion by remember { mutableStateOf(0) }
+
     // Demo Service logic moved to ViewModel
 
     LaunchedEffect(appConfigRepository) {
@@ -207,6 +210,28 @@ fun MainScreen(
         val voices = getVoiceRepository(currentProvider.id).getVoicesForProvider(currentProvider)
         availableVoices = voices
         selectedVoice = availableVoices.find { it.voiceId == savedConfig.voiceId } ?: voices.firstOrNull()
+    }
+
+    // 根据用户自定义模型 ID 计算当前供应商的展示信息（模型名称自适应）
+    val displayProvider = remember(savedConfig, currentProvider, configVersion) {
+        val effectiveModelId = savedConfig.modelId.ifBlank {
+            // 用户未自定义模型 ID 时，使用供应商默认模型 ID（若支持），否则保持原始展示
+            val provider = TtsProviderFactory.createProvider(currentProvider.id)
+            provider?.getDefaultModelId()?.ifBlank { currentProvider.provider } ?: currentProvider.provider
+        }
+        currentProvider.copy(provider = effectiveModelId)
+    }
+
+    // 供应商列表展示也自适应各供应商的自定义模型 ID
+    val displayProviders = remember(availableProviders, configVersion) {
+        availableProviders.map { provider ->
+            val config = getConfigRepository(provider.id).getConfig(provider.id)
+            val effectiveModelId = config.modelId.ifBlank {
+                val p = TtsProviderFactory.createProvider(provider.id)
+                p?.getDefaultModelId()?.ifBlank { provider.provider } ?: provider.provider
+            }
+            provider.copy(provider = effectiveModelId)
+        }
     }
 
     Scaffold(
@@ -327,8 +352,8 @@ fun MainScreen(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         ProviderSelector(
-                            currentProvider = currentProvider,
-                            availableProviders = availableProviders,
+                            currentProvider = displayProvider,
+                            availableProviders = displayProviders,
                             onProviderSelected = { provider ->
                                 currentProvider = provider
                                 appConfigRepository.saveSelectedProviderId(provider.id)
@@ -417,6 +442,7 @@ fun MainScreen(
     ConfigBottomSheet(
         onConfigSaved = {
             savedConfig = getConfigRepository(currentProvider.id).getConfig(currentProvider.id)
+            configVersion++
         },
         isOpen = isConfigSheetOpen,
         onDismiss = { viewModel.closeConfigSheet() },

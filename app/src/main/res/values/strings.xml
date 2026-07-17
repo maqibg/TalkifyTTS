@@ -36,6 +36,8 @@
     <string name="app_id_label">App ID</string>
     <string name="access_key_label">Access Key</string>
     <string name="voice_select_label">声音选择</string>
+    <string name="api_url_label">API 地址</string>
+    <string name="model_id_label">模型 ID</string>
     <string name="tencent_app_id_label">App ID</string>
     <string name="tencent_secret_id_label">Secret ID</string>
     <string name="tencent_secret_key_label">Secret Key</string>

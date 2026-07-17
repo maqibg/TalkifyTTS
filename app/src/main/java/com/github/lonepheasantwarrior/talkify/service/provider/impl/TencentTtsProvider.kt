@@ -567,8 +567,7 @@ class TencentTtsProvider : AbstractTtsProvider() {
             "app_id" -> context.getString(R.string.tencent_app_id_label)
             "secret_id" -> context.getString(R.string.tencent_secret_id_label)
             "secret_key" -> context.getString(R.string.tencent_secret_key_label)
-            "voice_id" -> context.getString(R.string.voice_select_label)
-            else -> null
+            else -> super.getConfigLabel(configKey, context)
         }
     }
 }

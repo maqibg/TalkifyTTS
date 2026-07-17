@@ -124,6 +124,26 @@ interface TtsProviderApi {
     fun createDefaultConfig(): BaseProviderConfig
 
     /**
+     * 获取供应商默认 API 地址
+     *
+     * 用于配置编辑界面展示占位提示，以及在用户未自定义时提供回退值。
+     * 若供应商不支持自定义 API 地址（如使用官方 SDK 内部端点），返回空字符串。
+     *
+     * @return 默认 API 地址，不支持时返回空字符串
+     */
+    fun getDefaultApiUrl(): String
+
+    /**
+     * 获取供应商默认模型 ID
+     *
+     * 用于配置编辑界面展示占位提示，以及在用户未自定义时提供回退值。
+     * 若供应商不支持自定义模型 ID（如使用音色 ID 区分模型），返回空字符串。
+     *
+     * @return 默认模型 ID，不支持时返回空字符串
+     */
+    fun getDefaultModelId(): String
+
+    /**
      * 获取配置项标签
      *
      * 用于 UI 层显示配置项的本地化标签

@@ -49,8 +49,8 @@ class XiaoMiMimoTtsProvider : AbstractTtsProvider() {
         const val PROVIDER_ID = "xiaomi-mimo-tts"
         const val PROVIDER_NAME = "小米MiMo语音合成"
         private const val VOICE_NAME_SEPARATOR = "::"
-        private const val API_URL = "https://api.xiaomimimo.com/v1/chat/completions"
-        private const val MODEL_NAME = "mimo-v2-tts"
+        const val DEFAULT_API_URL = "https://api.xiaomimimo.com/v1/chat/completions"
+        const val DEFAULT_MODEL = "mimo-v2-tts"
 
         // 文本分块配置
         private const val MAX_TEXT_LENGTH = 768
@@ -120,6 +120,10 @@ class XiaoMiMimoTtsProvider : AbstractTtsProvider() {
     override fun getProviderId(): String = PROVIDER_ID
 
     override fun getProviderName(): String = PROVIDER_NAME
+
+    override fun getDefaultApiUrl(): String = DEFAULT_API_URL
+
+    override fun getDefaultModelId(): String = DEFAULT_MODEL
 
     override fun getAudioConfig(): AudioConfig = audioConfig
 
@@ -428,8 +432,9 @@ class XiaoMiMimoTtsProvider : AbstractTtsProvider() {
         val effectiveVoice = resolveVoiceForLanguage(voiceId, params.language)
 
         // 构建请求体 - OpenAI Chat Completions 格式
+        val effectiveModel = config.modelId.ifBlank { DEFAULT_MODEL }
         val requestBody = JSONObject().apply {
-            put("model", MODEL_NAME)
+            put("model", effectiveModel)
             put("messages", org.json.JSONArray().put(
                 JSONObject().apply {
                     put("role", "assistant")
@@ -447,7 +452,7 @@ class XiaoMiMimoTtsProvider : AbstractTtsProvider() {
         val body = requestBody.toString().toRequestBody(mediaType)
 
         val request = Request.Builder()
-            .url(API_URL)
+            .url(config.apiUrl.ifBlank { DEFAULT_API_URL })
             .post(body)
             .header("api-key", config.apiKey)
             .header("Content-Type", "application/json")
@@ -692,8 +697,7 @@ class XiaoMiMimoTtsProvider : AbstractTtsProvider() {
     override fun getConfigLabel(configKey: String, context: android.content.Context): String? {
         return when (configKey) {
             "api_key" -> context.getString(R.string.api_key_label)
-            "voice_id" -> context.getString(R.string.voice_select_label)
-            else -> null
+            else -> super.getConfigLabel(configKey, context)
         }
     }
 }

@@ -70,7 +70,7 @@ class MicrosoftTtsProvider : AbstractTtsProvider() {
 
         private const val BASE_URL = "speech.platform.bing.com/consumer/speech/synthesize/readaloud"
         private const val TRUSTED_CLIENT_TOKEN = "6A5AA1D4EAFF4E9FB37E23D68491D6F4"
-        private const val WSS_URL = "wss://$BASE_URL/edge/v1?TrustedClientToken=$TRUSTED_CLIENT_TOKEN"
+        const val DEFAULT_WSS_URL = "wss://$BASE_URL/edge/v1?TrustedClientToken=$TRUSTED_CLIENT_TOKEN"
         private const val CHROMIUM_FULL_VERSION = "143.0.3650.75"
         private const val CHROMIUM_MAJOR_VERSION = "143"
         private const val SEC_MS_GEC_VERSION = "1-$CHROMIUM_FULL_VERSION"
@@ -247,6 +247,10 @@ class MicrosoftTtsProvider : AbstractTtsProvider() {
     @Volatile
     private var lastUsedTimestamp = 0L
 
+    /** 当前合成使用的 API 地址（用户自定义或默认），用于创建新连接时确定目标端点 */
+    @Volatile
+    private var currentApiUrl: String = DEFAULT_WSS_URL
+
     private val client = OkHttpClient.Builder()
         .connectTimeout(5, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
@@ -277,6 +281,8 @@ class MicrosoftTtsProvider : AbstractTtsProvider() {
     override fun getProviderId(): String = PROVIDER_ID
     override fun getProviderName(): String = PROVIDER_NAME
 
+    override fun getDefaultApiUrl(): String = DEFAULT_WSS_URL
+
     override fun synthesize(
         text: String, params: SynthesisParams, config: BaseProviderConfig, listener: TtsSynthesisListener
     ) {
@@ -287,6 +293,14 @@ class MicrosoftTtsProvider : AbstractTtsProvider() {
             logError("Invalid config type, expected MicrosoftTtsConfig")
             listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_PROVIDER_NOT_CONFIGURED))
             return
+        }
+
+        // 更新当前 API 地址（用户自定义优先，为空时使用默认值）
+        val newApiUrl = msConfig.apiUrl.ifBlank { DEFAULT_WSS_URL }
+        if (newApiUrl != currentApiUrl) {
+            logInfo("API URL changed, closing old connection and will create new: $newApiUrl")
+            currentApiUrl = newApiUrl
+            closeConnection()
         }
 
         val cleanedText = removeIncompatibleCharacters(text)
@@ -453,7 +467,7 @@ class MicrosoftTtsProvider : AbstractTtsProvider() {
      */
     private suspend fun openWebSocket(listener: PersistentWebSocketListener): WebSocket {
         val connectionId = connectId()
-        val url = "$WSS_URL&ConnectionId=$connectionId" +
+        val url = "$currentApiUrl&ConnectionId=$connectionId" +
                 "&Sec-MS-GEC=${generateSecMsGec()}&Sec-MS-GEC-Version=$SEC_MS_GEC_VERSION"
 
         val requestBuilder = Request.Builder().url(url)
@@ -965,7 +979,7 @@ class MicrosoftTtsProvider : AbstractTtsProvider() {
     override fun getConfigLabel(configKey: String, context: Context): String? {
         return when (configKey) {
             "voice_id" -> context.getString(R.string.voice_select_label)
-            else -> null
+            else -> super.getConfigLabel(configKey, context)
         }
     }
 }

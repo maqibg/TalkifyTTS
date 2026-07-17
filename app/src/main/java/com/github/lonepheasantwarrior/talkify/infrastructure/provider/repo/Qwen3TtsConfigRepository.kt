@@ -26,7 +26,9 @@ class Qwen3TtsConfigRepository(
         val prefsKey = getPrefsKey(providerId)
         return Qwen3TtsConfig(
             apiKey = sharedPreferences.getString("${prefsKey}_$KEY_API_KEY", "") ?: "",
-            voiceId = sharedPreferences.getString("${prefsKey}_$KEY_VOICE_ID", "") ?: ""
+            voiceId = sharedPreferences.getString("${prefsKey}_$KEY_VOICE_ID", "") ?: "",
+            apiUrl = sharedPreferences.getString("${prefsKey}_$KEY_API_URL", "") ?: "",
+            modelId = sharedPreferences.getString("${prefsKey}_$KEY_MODEL_ID", "") ?: ""
         )
     }
 
@@ -36,13 +38,17 @@ class Qwen3TtsConfigRepository(
         sharedPreferences.edit()
             .putString("${prefsKey}_$KEY_API_KEY", qwenConfig.apiKey)
             .putString("${prefsKey}_$KEY_VOICE_ID", qwenConfig.voiceId)
+            .putString("${prefsKey}_$KEY_API_URL", qwenConfig.apiUrl)
+            .putString("${prefsKey}_$KEY_MODEL_ID", qwenConfig.modelId)
             .apply()
     }
 
     override fun hasConfig(providerId: String): Boolean {
         val prefsKey = getPrefsKey(providerId)
         return sharedPreferences.contains("${prefsKey}_$KEY_API_KEY") ||
-                sharedPreferences.contains("${prefsKey}_$KEY_VOICE_ID")
+                sharedPreferences.contains("${prefsKey}_$KEY_VOICE_ID") ||
+                sharedPreferences.contains("${prefsKey}_$KEY_API_URL") ||
+                sharedPreferences.contains("${prefsKey}_$KEY_MODEL_ID")
     }
 
     private fun getPrefsKey(providerId: String): String {
@@ -53,5 +59,7 @@ class Qwen3TtsConfigRepository(
         private const val PREFS_NAME = "talkify_engine_configs"
         private const val KEY_API_KEY = "api_key"
         private const val KEY_VOICE_ID = "voice_id"
+        private const val KEY_API_URL = "api_url"
+        private const val KEY_MODEL_ID = "model_id"
     }
 }

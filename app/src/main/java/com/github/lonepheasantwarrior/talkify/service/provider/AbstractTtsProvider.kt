@@ -1,5 +1,7 @@
 package com.github.lonepheasantwarrior.talkify.service.provider
 
+import android.content.Context
+import com.github.lonepheasantwarrior.talkify.R
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
 
 abstract class AbstractTtsProvider : TtsProviderApi {
@@ -21,6 +23,33 @@ abstract class AbstractTtsProvider : TtsProviderApi {
 
     override fun getAudioConfig(): AudioConfig {
         return AudioConfig()
+    }
+
+    /**
+     * 默认 API 地址，返回空字符串表示供应商不支持自定义 API 地址。
+     * 子类可按需重写。
+     */
+    override fun getDefaultApiUrl(): String = ""
+
+    /**
+     * 默认模型 ID，返回空字符串表示供应商不支持自定义模型 ID。
+     * 子类可按需重写。
+     */
+    override fun getDefaultModelId(): String = ""
+
+    /**
+     * 通用配置项标签的默认实现。
+     *
+     * 提供 api_url、model_id、voice_id 三个跨供应商通用标签。
+     * 子类重写 [getConfigLabel] 时应将不匹配的 key 委托给 super。
+     */
+    override fun getConfigLabel(configKey: String, context: Context): String? {
+        return when (configKey) {
+            "api_url" -> context.getString(R.string.api_url_label)
+            "model_id" -> context.getString(R.string.model_id_label)
+            "voice_id" -> context.getString(R.string.voice_select_label)
+            else -> null
+        }
     }
 
     protected fun checkNotReleased() {

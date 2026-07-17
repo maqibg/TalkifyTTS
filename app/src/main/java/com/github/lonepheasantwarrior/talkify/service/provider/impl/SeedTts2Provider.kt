@@ -50,8 +50,8 @@ class SeedTts2Provider : AbstractTtsProvider() {
         const val PROVIDER_ID = "seed-tts-2.0"
         const val PROVIDER_NAME = "豆包语音合成2.0"
         private const val VOICE_NAME_SEPARATOR = "::"
-        private const val API_URL = "https://openspeech.bytedance.com/api/v3/tts/unidirectional"
-        private const val RESOURCE_ID = "seed-tts-2.0"
+        const val DEFAULT_API_URL = "https://openspeech.bytedance.com/api/v3/tts/unidirectional"
+        const val DEFAULT_RESOURCE_ID = "seed-tts-2.0"
 
         // 文本分块配置
         private const val MAX_TEXT_LENGTH = 300
@@ -120,6 +120,10 @@ class SeedTts2Provider : AbstractTtsProvider() {
     override fun getProviderId(): String = PROVIDER_ID
 
     override fun getProviderName(): String = PROVIDER_NAME
+
+    override fun getDefaultApiUrl(): String = DEFAULT_API_URL
+
+    override fun getDefaultModelId(): String = DEFAULT_RESOURCE_ID
 
     override fun getAudioConfig(): AudioConfig = audioConfig
 
@@ -429,11 +433,14 @@ class SeedTts2Provider : AbstractTtsProvider() {
         val mediaType = "application/json; charset=utf-8".toMediaType()
         val body = requestBody.toString().toRequestBody(mediaType)
 
+        val effectiveApiUrl = config.apiUrl.ifBlank { DEFAULT_API_URL }
+        val effectiveResourceId = config.modelId.ifBlank { DEFAULT_RESOURCE_ID }
+
         val request = Request.Builder()
-            .url(API_URL)
+            .url(effectiveApiUrl)
             .post(body)
             .header("x-api-key", config.apiKey)
-            .header("X-Api-Resource-Id", RESOURCE_ID)
+            .header("X-Api-Resource-Id", effectiveResourceId)
             .header("Content-Type", "application/json")
             .header("Connection", "keep-alive")
             .build()
@@ -724,8 +731,7 @@ class SeedTts2Provider : AbstractTtsProvider() {
     override fun getConfigLabel(configKey: String, context: android.content.Context): String? {
         return when (configKey) {
             "api_key" -> context.getString(R.string.api_key_label)
-            "voice_id" -> context.getString(R.string.voice_select_label)
-            else -> null
+            else -> super.getConfigLabel(configKey, context)
         }
     }
 }

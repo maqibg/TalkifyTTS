@@ -41,7 +41,8 @@ class Qwen3TtsProvider : AbstractTtsProvider() {
         const val PROVIDER_ID = "qwen3-tts"
         const val PROVIDER_NAME = "通义千问3语音合成"
 
-        const val MODEL_QWEN3_TTS_FLASH = "qwen3-tts-flash"
+        const val DEFAULT_API_URL = "https://dashscope.aliyuncs.com/api/v1"
+        const val DEFAULT_MODEL = "qwen3-tts-flash"
 
         private const val DEFAULT_LANGUAGE = "Auto"
 
@@ -67,12 +68,16 @@ class Qwen3TtsProvider : AbstractTtsProvider() {
         @JvmName("getAudioConfigProperty") get() = AudioConfig.QWEN3_TTS
 
     init {
-        Constants.baseHttpApiUrl = "https://dashscope.aliyuncs.com/api/v1"
+        Constants.baseHttpApiUrl = DEFAULT_API_URL
     }
 
     override fun getProviderId(): String = PROVIDER_ID
 
     override fun getProviderName(): String = PROVIDER_NAME
+
+    override fun getDefaultApiUrl(): String = DEFAULT_API_URL
+
+    override fun getDefaultModelId(): String = DEFAULT_MODEL
 
     override fun synthesize(
         text: String, params: SynthesisParams, config: BaseProviderConfig, listener: TtsSynthesisListener
@@ -388,8 +393,15 @@ class Qwen3TtsProvider : AbstractTtsProvider() {
 
         val languageType = convertToQwenLanguageType(params.language)
 
+        // 用户自定义 API 地址优先，为空时回退到默认地址
+        val effectiveApiUrl = config.apiUrl.ifBlank { DEFAULT_API_URL }
+        Constants.baseHttpApiUrl = effectiveApiUrl
+
+        // 用户自定义模型 ID 优先，为空时回退到默认模型
+        val effectiveModel = config.modelId.ifBlank { DEFAULT_MODEL }
+
         return MultiModalConversationParam.builder().apiKey(config.apiKey)
-            .model(MODEL_QWEN3_TTS_FLASH).text(text).voice(voice).languageType(languageType)
+            .model(effectiveModel).text(text).voice(voice).languageType(languageType)
             // 【保险参数】：主动向云端请求 PCM 裸流（部分版本 SDK/大模型已支持该参数）
             .parameter("format", "pcm")
             .build()
@@ -530,8 +542,7 @@ class Qwen3TtsProvider : AbstractTtsProvider() {
     override fun getConfigLabel(configKey: String, context: android.content.Context): String? {
         return when (configKey) {
             "api_key" -> context.getString(R.string.api_key_label)
-            "voice_id" -> context.getString(R.string.voice_select_label)
-            else -> null
+            else -> super.getConfigLabel(configKey, context)
         }
     }
 }

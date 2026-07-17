@@ -21,10 +21,15 @@ package com.github.lonepheasantwarrior.talkify.domain.model
  * @property voiceId 声音 ID，格式为 "声音名称::语言代码"
  *                   如 "CHERRY::zh-CN"、"EMMA::en-US" 等
  *                   可用声音列表参考 [AudioParameters.Voice]
+ * @property apiUrl 自定义 API 地址，为空时使用默认地址
+ *                   （默认：https://dashscope.aliyuncs.com/api/v1）
+ * @property modelId 自定义模型 ID，为空时使用默认模型（默认：qwen3-tts-flash）
  * @property apiKey 阿里云百炼平台的 API Key
  *                  从阿里云控制台获取，需具有百炼服务访问权限
  */
 data class Qwen3TtsConfig(
     override val voiceId: String = "",
+    override val apiUrl: String = "",
+    override val modelId: String = "",
     val apiKey: String = ""
-) : BaseProviderConfig(voiceId)
+) : BaseProviderConfig(voiceId, apiUrl, modelId)

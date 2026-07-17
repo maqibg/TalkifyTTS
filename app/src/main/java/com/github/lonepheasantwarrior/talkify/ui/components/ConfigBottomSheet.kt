@@ -127,9 +127,16 @@ fun ConfigBottomSheet(
         }
     }
 
+    val defaultApiUrl = remember(currentProvider.id) {
+        provider?.getDefaultApiUrl() ?: ""
+    }
+    val defaultModelId = remember(currentProvider.id) {
+        provider?.getDefaultModelId() ?: ""
+    }
+
     var configItems by remember(currentProvider, configForEdit, isOpen, getLabel) {
         mutableStateOf(
-            buildConfigItems(configForEdit, getLabel)
+            buildConfigItems(configForEdit, getLabel, defaultApiUrl, defaultModelId)
         )
     }
 
@@ -213,9 +220,41 @@ fun ConfigBottomSheet(
 
 private fun buildConfigItems(
     config: BaseProviderConfig,
-    getLabel: (String) -> String?
+    getLabel: (String) -> String?,
+    defaultApiUrl: String,
+    defaultModelId: String
 ): List<ConfigItem> {
     val items = mutableListOf<ConfigItem>()
+
+    // API 地址（仅当供应商支持自定义时展示，placeholder 显示默认值）
+    if (defaultApiUrl.isNotEmpty()) {
+        val apiUrlLabel = getLabel("api_url")
+        if (apiUrlLabel != null) {
+            items.add(
+                ConfigItem(
+                    key = "api_url",
+                    label = apiUrlLabel,
+                    value = config.apiUrl,
+                    placeholder = defaultApiUrl
+                )
+            )
+        }
+    }
+
+    // 模型 ID（仅当供应商支持自定义时展示，placeholder 显示默认值）
+    if (defaultModelId.isNotEmpty()) {
+        val modelIdLabel = getLabel("model_id")
+        if (modelIdLabel != null) {
+            items.add(
+                ConfigItem(
+                    key = "model_id",
+                    label = modelIdLabel,
+                    value = config.modelId,
+                    placeholder = defaultModelId
+                )
+            )
+        }
+    }
 
     when (config) {
         is Qwen3TtsConfig -> {
@@ -346,20 +385,26 @@ private fun buildConfigFromItems(
     defaultConfig: BaseProviderConfig
 ): BaseProviderConfig {
     val voiceId = items.find { it.key == "voice_id" }?.value ?: defaultConfig.voiceId
+    val apiUrl = items.find { it.key == "api_url" }?.value ?: ""
+    val modelId = items.find { it.key == "model_id" }?.value ?: ""
 
     return when (defaultConfig) {
         is Qwen3TtsConfig -> {
             val apiKey = items.find { it.key == "api_key" }?.value ?: ""
             Qwen3TtsConfig(
                 apiKey = apiKey,
-                voiceId = voiceId
+                voiceId = voiceId,
+                apiUrl = apiUrl,
+                modelId = modelId
             )
         }
         is SeedTts2Config -> {
             val apiKey = items.find { it.key == "api_key" }?.value ?: ""
             SeedTts2Config(
                 apiKey = apiKey,
-                voiceId = voiceId
+                voiceId = voiceId,
+                apiUrl = apiUrl,
+                modelId = modelId
             )
         }
         is TencentTtsConfig -> {
@@ -370,19 +415,24 @@ private fun buildConfigFromItems(
                 appId = appId,
                 secretId = secretId,
                 secretKey = secretKey,
-                voiceId = voiceId
+                voiceId = voiceId,
+                apiUrl = apiUrl,
+                modelId = modelId
             )
         }
         is MicrosoftTtsConfig -> {
             MicrosoftTtsConfig(
-                voiceId = voiceId
+                voiceId = voiceId,
+                apiUrl = apiUrl
             )
         }
         is XiaoMiMimoConfig -> {
             val apiKey = items.find { it.key == "api_key" }?.value ?: ""
             XiaoMiMimoConfig(
                 apiKey = apiKey,
-                voiceId = voiceId
+                voiceId = voiceId,
+                apiUrl = apiUrl,
+                modelId = modelId
             )
         }
         is MiniMaxTtsConfig -> {
@@ -391,6 +441,8 @@ private fun buildConfigFromItems(
             MiniMaxTtsConfig(
                 apiKey = apiKey,
                 voiceId = voiceId,
+                apiUrl = apiUrl,
+                modelId = modelId,
                 continuousSound = continuousSound
             )
         }

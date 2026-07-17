@@ -198,6 +198,7 @@ private fun ConfigItemEditor(
             value = item.value,
             onValueChange = onValueChange,
             label = { Text(item.label) },
+            placeholder = item.placeholder?.let { { Text(it) } },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             enabled = !item.isVoiceSelector,

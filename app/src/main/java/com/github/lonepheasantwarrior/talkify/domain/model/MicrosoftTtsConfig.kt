@@ -17,7 +17,10 @@ package com.github.lonepheasantwarrior.talkify.domain.model
  * ```
  *
  * @property voiceId 声音 ID，微软标准格式
+ * @property apiUrl 自定义 WebSocket API 地址，为空时使用默认地址
+ *                   （默认：wss://speech.platform.bing.com/...）
  */
 data class MicrosoftTtsConfig(
-    override val voiceId: String = ""
-) : BaseProviderConfig(voiceId)
+    override val voiceId: String = "",
+    override val apiUrl: String = ""
+) : BaseProviderConfig(voiceId, apiUrl, "")

@@ -55,8 +55,8 @@ class MiniMaxTtsProvider : AbstractTtsProvider() {
         const val PROVIDER_ID = "minimax-tts"
         const val PROVIDER_NAME = "MiniMax语音合成"
         private const val VOICE_NAME_SEPARATOR = "::"
-        private const val WSS_URL = "wss://api.minimaxi.com/ws/v1/t2a_v2"
-        private const val DEFAULT_MODEL = "speech-2.8-turbo"
+        const val DEFAULT_WSS_URL = "wss://api.minimaxi.com/ws/v1/t2a_v2"
+        const val DEFAULT_MODEL = "speech-2.8-turbo"
 
         private const val MAX_TEXT_LENGTH = 10000
 
@@ -113,6 +113,10 @@ class MiniMaxTtsProvider : AbstractTtsProvider() {
     override fun getProviderId(): String = PROVIDER_ID
 
     override fun getProviderName(): String = PROVIDER_NAME
+
+    override fun getDefaultApiUrl(): String = DEFAULT_WSS_URL
+
+    override fun getDefaultModelId(): String = DEFAULT_MODEL
 
     override fun getAudioConfig(): AudioConfig = audioConfig
 
@@ -210,7 +214,7 @@ class MiniMaxTtsProvider : AbstractTtsProvider() {
 
         try {
             val request = Request.Builder()
-                .url(WSS_URL)
+                .url(config.apiUrl.ifBlank { DEFAULT_WSS_URL })
                 .header("Authorization", "Bearer ${config.apiKey}")
                 .build()
 
@@ -443,9 +447,10 @@ class MiniMaxTtsProvider : AbstractTtsProvider() {
             val pitch = ((params.pitch - 100f) * 12f / 100f).roundToInt().coerceIn(-12, 12)
             val emotion = resolveEmotion(params)
 
+            val effectiveModel = config.modelId.ifBlank { DEFAULT_MODEL }
             val message = JSONObject().apply {
                 put("event", "task_start")
-                put("model", DEFAULT_MODEL)
+                put("model", effectiveModel)
                 put("continuous_sound", config.continuousSound)
                 put("voice_setting", JSONObject().apply {
                     put("voice_id", voiceId)
@@ -971,9 +976,8 @@ class MiniMaxTtsProvider : AbstractTtsProvider() {
     override fun getConfigLabel(configKey: String, context: android.content.Context): String? {
         return when (configKey) {
             "api_key" -> context.getString(R.string.api_key_label)
-            "voice_id" -> context.getString(R.string.voice_select_label)
             "continuous_sound" -> "合成配置"
-            else -> null
+            else -> super.getConfigLabel(configKey, context)
         }
     }
 }

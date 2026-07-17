@@ -28,7 +28,9 @@ class TencentTtsConfigRepository(
             appId = sharedPreferences.getString("${prefsKey}_$KEY_APP_ID", "") ?: "",
             secretId = sharedPreferences.getString("${prefsKey}_$KEY_SECRET_ID", "") ?: "",
             secretKey = sharedPreferences.getString("${prefsKey}_$KEY_SECRET_KEY", "") ?: "",
-            voiceId = sharedPreferences.getString("${prefsKey}_$KEY_VOICE_ID", "") ?: ""
+            voiceId = sharedPreferences.getString("${prefsKey}_$KEY_VOICE_ID", "") ?: "",
+            apiUrl = sharedPreferences.getString("${prefsKey}_$KEY_API_URL", "") ?: "",
+            modelId = sharedPreferences.getString("${prefsKey}_$KEY_MODEL_ID", "") ?: ""
         )
     }
 
@@ -40,6 +42,8 @@ class TencentTtsConfigRepository(
             .putString("${prefsKey}_$KEY_SECRET_ID", tencentConfig.secretId)
             .putString("${prefsKey}_$KEY_SECRET_KEY", tencentConfig.secretKey)
             .putString("${prefsKey}_$KEY_VOICE_ID", tencentConfig.voiceId)
+            .putString("${prefsKey}_$KEY_API_URL", tencentConfig.apiUrl)
+            .putString("${prefsKey}_$KEY_MODEL_ID", tencentConfig.modelId)
             .apply()
     }
 
@@ -48,7 +52,9 @@ class TencentTtsConfigRepository(
         return sharedPreferences.contains("${prefsKey}_$KEY_APP_ID") ||
                 sharedPreferences.contains("${prefsKey}_$KEY_SECRET_ID") ||
                 sharedPreferences.contains("${prefsKey}_$KEY_SECRET_KEY") ||
-                sharedPreferences.contains("${prefsKey}_$KEY_VOICE_ID")
+                sharedPreferences.contains("${prefsKey}_$KEY_VOICE_ID") ||
+                sharedPreferences.contains("${prefsKey}_$KEY_API_URL") ||
+                sharedPreferences.contains("${prefsKey}_$KEY_MODEL_ID")
     }
 
     private fun getPrefsKey(providerId: String): String {
@@ -61,5 +67,7 @@ class TencentTtsConfigRepository(
         private const val KEY_SECRET_ID = "secret_id"
         private const val KEY_SECRET_KEY = "secret_key"
         private const val KEY_VOICE_ID = "voice_id"
+        private const val KEY_API_URL = "api_url"
+        private const val KEY_MODEL_ID = "model_id"
     }
 }

@@ -24,7 +24,8 @@ class MicrosoftTtsConfigRepository(
     override fun getConfig(providerId: String): BaseProviderConfig {
         val prefsKey = getPrefsKey(providerId)
         return MicrosoftTtsConfig(
-            voiceId = sharedPreferences.getString("${prefsKey}_$KEY_VOICE_ID", "") ?: ""
+            voiceId = sharedPreferences.getString("${prefsKey}_$KEY_VOICE_ID", "") ?: "",
+            apiUrl = sharedPreferences.getString("${prefsKey}_$KEY_API_URL", "") ?: ""
         )
     }
 
@@ -33,12 +34,14 @@ class MicrosoftTtsConfigRepository(
         val msConfig = config as? MicrosoftTtsConfig ?: return
         sharedPreferences.edit()
             .putString("${prefsKey}_$KEY_VOICE_ID", msConfig.voiceId)
+            .putString("${prefsKey}_$KEY_API_URL", msConfig.apiUrl)
             .apply()
     }
 
     override fun hasConfig(providerId: String): Boolean {
         val prefsKey = getPrefsKey(providerId)
-        return sharedPreferences.contains("${prefsKey}_$KEY_VOICE_ID")
+        return sharedPreferences.contains("${prefsKey}_$KEY_VOICE_ID") ||
+                sharedPreferences.contains("${prefsKey}_$KEY_API_URL")
     }
 
     private fun getPrefsKey(providerId: String): String {
@@ -48,5 +51,6 @@ class MicrosoftTtsConfigRepository(
     companion object {
         private const val PREFS_NAME = "talkify_engine_configs"
         private const val KEY_VOICE_ID = "voice_id"
+        private const val KEY_API_URL = "api_url"
     }
 }
