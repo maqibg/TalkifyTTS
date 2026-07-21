@@ -151,6 +151,16 @@
     <string name="about_qq_group_copied">QQ群号已复制到剪贴板</string>
     <string name="about_donate">打赏支持</string>
     <string name="about_donate_description">如果这个项目对你有帮助，欢迎打赏支持</string>
+    <string name="about_privacy">隐私相关</string>
+    <string name="about_privacy_description">了解我们如何保护你的信息安全</string>
+    <string name="about_privacy_dialog_title">匿名信息收集声明</string>
+    <string name="about_privacy_dialog_subtitle">为改善服务，仅匿名收集以下信息：</string>
+    <string name="about_privacy_item_hardware">设备硬件信息（CPU 架构、屏幕分辨率等）</string>
+    <string name="about_privacy_item_country">所在国家或地区</string>
+    <string name="about_privacy_item_network">网络类型（Wi-Fi / 蜂窝网络）</string>
+    <string name="about_privacy_item_tts">语音合成时使用的供应商和模型 ID（包含合成内容字数）</string>
+    <string name="about_privacy_disclaimer">以上信息均无法识别个人身份，不涉及任何隐私内容。</string>
+    <string name="about_privacy_confirm">我知道了</string>
 
     <!-- 检查更新 -->
     <string name="check_for_updates">检查更新</string>

@@ -33,6 +33,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -43,6 +44,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Surface
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -91,6 +93,7 @@ fun AboutScreen(
     var showDonateInstruction by remember { mutableStateOf<DonateChannel?>(null) }
     var showPermissionDialog by remember { mutableStateOf(false) }
     var pendingDonateChannel by remember { mutableStateOf<DonateChannel?>(null) }
+    var showPrivacyDialog by remember { mutableStateOf(false) }
 
     val githubUrl = stringResource(R.string.about_github_url)
 
@@ -298,6 +301,36 @@ fun AboutScreen(
                         imageVector = Icons.AutoMirrored.Filled.OpenInNew,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 关于隐私
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showPrivacyDialog = true },
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                ),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.about_privacy),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = stringResource(R.string.about_privacy_description),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -550,6 +583,99 @@ fun AboutScreen(
                 )
             }
         }
+    }
+
+    // 匿名信息收集声明弹窗
+    if (showPrivacyDialog) {
+        val privacyItems = listOf(
+            stringResource(R.string.about_privacy_item_hardware),
+            stringResource(R.string.about_privacy_item_country),
+            stringResource(R.string.about_privacy_item_network),
+            stringResource(R.string.about_privacy_item_tts)
+        )
+
+        AlertDialog(
+            onDismissRequest = { showPrivacyDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Outlined.Shield,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(36.dp)
+                )
+            },
+            title = {
+                Column {
+                    Text(
+                        text = stringResource(R.string.about_privacy_dialog_title),
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(R.string.about_privacy_dialog_subtitle),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    privacyItems.forEachIndexed { index, item ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Text(
+                                text = "${index + 1}.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.width(20.dp)
+                            )
+                            Text(
+                                text = item,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // 强调不收集隐私数据
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Text(
+                                text = "\uD83D\uDD12",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(R.string.about_privacy_disclaimer),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showPrivacyDialog = false }) {
+                    Text(stringResource(R.string.about_privacy_confirm))
+                }
+            },
+            shape = RoundedCornerShape(24.dp)
+        )
     }
 
     if (showPermissionDialog) {
