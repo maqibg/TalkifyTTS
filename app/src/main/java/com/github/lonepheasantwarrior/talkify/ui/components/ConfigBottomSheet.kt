@@ -27,6 +27,7 @@ import com.github.lonepheasantwarrior.talkify.domain.model.AliyunBailianConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.AzureConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.ConfigItem
+import com.github.lonepheasantwarrior.talkify.domain.model.LanguageBoost
 import com.github.lonepheasantwarrior.talkify.domain.model.MiniMaxConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.TencentCloudConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.TtsProvider
@@ -374,14 +375,52 @@ private fun buildConfigItems(
     if (config is MiniMaxConfig) {
         val synthConfigLabel = getLabel("continuous_sound")
         if (synthConfigLabel != null) {
+            val csValue = when (config.continuousSound) {
+                true -> "true"
+                false -> "false"
+                null -> "default"
+            }
             items.add(
                 ConfigItem(
                     key = "continuous_sound",
                     label = synthConfigLabel,
-                    value = config.continuousSound.toString(),
+                    value = csValue,
                     dropdownOptions = listOf(
+                        "default" to "默认",
                         "true" to "更自然韵律",
                         "false" to "更快速度"
+                    )
+                )
+            )
+        }
+
+        val languageBoostLabel = getLabel("language_boost")
+        if (languageBoostLabel != null) {
+            items.add(
+                ConfigItem(
+                    key = "language_boost",
+                    label = languageBoostLabel,
+                    value = config.languageBoost.name,
+                    dropdownOptions = listOf(
+                        "OFF" to "关闭",
+                        "AUTO" to "自动",
+                        "CHINESE" to "中文",
+                        "ENGLISH" to "英文"
+                    )
+                )
+            )
+        }
+
+        val englishNormLabel = getLabel("english_normalization")
+        if (englishNormLabel != null) {
+            items.add(
+                ConfigItem(
+                    key = "english_normalization",
+                    label = englishNormLabel,
+                    value = config.englishNormalization.toString(),
+                    dropdownOptions = listOf(
+                        "true" to "开启",
+                        "false" to "关闭"
                     )
                 )
             )
@@ -450,13 +489,24 @@ private fun buildConfigFromItems(
         }
         is MiniMaxConfig -> {
             val apiKey = items.find { it.key == "api_key" }?.value ?: ""
-            val continuousSound = items.find { it.key == "continuous_sound" }?.value?.toBooleanStrictOrNull() ?: true
+            val continuousSound = when (val csVal = items.find { it.key == "continuous_sound" }?.value) {
+                "default", null -> null
+                else -> csVal.toBooleanStrictOrNull()
+            }
+            val languageBoost = try {
+                LanguageBoost.valueOf(items.find { it.key == "language_boost" }?.value ?: LanguageBoost.OFF.name)
+            } catch (_: IllegalArgumentException) {
+                LanguageBoost.OFF
+            }
+            val englishNormalization = items.find { it.key == "english_normalization" }?.value?.toBooleanStrictOrNull() ?: false
             MiniMaxConfig(
                 apiKey = apiKey,
                 voiceId = voiceId,
                 apiUrl = apiUrl,
                 modelId = modelId,
-                continuousSound = continuousSound
+                continuousSound = continuousSound,
+                languageBoost = languageBoost,
+                englishNormalization = englishNormalization
             )
         }
         else -> defaultConfig

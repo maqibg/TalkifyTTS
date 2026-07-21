@@ -4,6 +4,7 @@ import android.speech.tts.Voice
 import com.github.lonepheasantwarrior.talkify.R
 import com.github.lonepheasantwarrior.talkify.TalkifyAppHolder
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.LanguageBoost
 import com.github.lonepheasantwarrior.talkify.domain.model.MiniMaxConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.ProviderIds
 import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlParser
@@ -301,12 +302,34 @@ class MiniMaxProvider : AbstractTtsProvider() {
 
                 when (event) {
                     "connected_success" -> {
-                        logDebug("Received connected_success, session_id=${json.optString("session_id")}")
+                        val baseResp = json.optJSONObject("base_resp")
+                        val statusCode = baseResp?.optInt("status_code", -1) ?: -1
+                        if (statusCode != 0) {
+                            val statusMsg = baseResp?.optString("status_msg", "") ?: ""
+                            val errorMsg = parseMiniMaxError(statusCode, statusMsg)
+                            logError("connected_success error: $errorMsg")
+                            if (!errorDeferred.isCompleted) {
+                                errorDeferred.complete(errorMsg)
+                            }
+                        } else {
+                            logDebug("Received connected_success, session_id=${json.optString("session_id")}")
+                        }
                     }
                     "task_started" -> {
-                        logDebug("Received task_started")
-                        if (!taskStartedDeferred.isCompleted) {
-                            taskStartedDeferred.complete(Unit)
+                        val baseResp = json.optJSONObject("base_resp")
+                        val statusCode = baseResp?.optInt("status_code", -1) ?: -1
+                        if (statusCode != 0) {
+                            val statusMsg = baseResp?.optString("status_msg", "") ?: ""
+                            val errorMsg = parseMiniMaxError(statusCode, statusMsg)
+                            logError("task_started error: $errorMsg")
+                            if (!errorDeferred.isCompleted) {
+                                errorDeferred.complete(errorMsg)
+                            }
+                        } else {
+                            logDebug("Received task_started")
+                            if (!taskStartedDeferred.isCompleted) {
+                                taskStartedDeferred.complete(Unit)
+                            }
                         }
                     }
                     "task_continued" -> {
@@ -441,7 +464,7 @@ class MiniMaxProvider : AbstractTtsProvider() {
          */
         fun sendTaskStart(webSocket: WebSocket) {
             val speed = convertSpeechRate(params.speechRate)
-            val vol = convertVolume(params.volume)
+            val vol = convertVolume(params)
             val pitch = ((params.pitch - 100f) * 12f / 100f).roundToInt().coerceIn(-12, 12)
             val emotion = resolveEmotion(params)
 
@@ -449,7 +472,7 @@ class MiniMaxProvider : AbstractTtsProvider() {
             val message = JSONObject().apply {
                 put("event", "task_start")
                 put("model", effectiveModel)
-                put("continuous_sound", config.continuousSound)
+                config.continuousSound?.let { put("continuous_sound", it) }
                 put("voice_setting", JSONObject().apply {
                     put("voice_id", voiceId)
                     put("speed", speed)
@@ -465,9 +488,15 @@ class MiniMaxProvider : AbstractTtsProvider() {
                     put("format", "mp3")
                     put("channel", audioConfig.channelCount)
                 })
+                if (config.languageBoost != LanguageBoost.OFF) {
+                    put("language_boost", config.languageBoost.apiValue)
+                }
+                if (config.englishNormalization) {
+                    put("english_normalization", true)
+                }
             }
 
-            logInfo("Sending task_start: voice=$voiceId, speed=$speed, vol=$vol, pitch=$pitch, continuousSound=${config.continuousSound}")
+            logInfo("Sending task_start: voice=$voiceId, speed=$speed, vol=$vol, pitch=$pitch, continuousSound=${config.continuousSound}, languageBoost=${config.languageBoost}, englishNormalization=${config.englishNormalization}")
             logInfo("task_start body: ${message.toString(2)}")
             webSocket.send(message.toString())
         }
@@ -560,7 +589,7 @@ class MiniMaxProvider : AbstractTtsProvider() {
                         pcmBytes,
                         sampleRate,
                         AudioConfig.DEFAULT_AUDIO_FORMAT,
-                        AudioConfig.DEFAULT_CHANNEL_COUNT
+                        sampleBuffer.channelCount  // 使用 JLayer 实际解码的声道数
                     )
                 }
 
@@ -675,13 +704,15 @@ class MiniMaxProvider : AbstractTtsProvider() {
     /**
      * 转换音量参数
      *
-     * Android TTS 音量与 MiniMax API 音量均为 0.0-1.0 范围，直接转发
+     * Android TTS 音量范围 [0.0, 1.0]（默认 1.0 = 正常音量） →
+     * MiniMax API vol 范围 (0, 10]（默认 1.0）。
+     * 采用保守映射，避免极端增益导致 API 输出音频削波失真。
      *
-     * @param androidVolume Android TTS 音量值
-     * @return MiniMax API 音量值
+     * @param params 合成参数
+     * @return MiniMax API 音量值，范围 (0, 10]
      */
-    private fun convertVolume(androidVolume: Float): Float {
-        return androidVolume
+    private fun convertVolume(params: SynthesisParams): Float {
+        return (1.0f + params.volume * 1.0f).coerceIn(0.1f, 10f)
     }
 
     /**

@@ -183,6 +183,11 @@
     <string name="donate_photos_permission_grant">去授权</string>
     <string name="donate_photos_permission_deny">取消</string>
 
+    <!-- MiniMax 高级设置 -->
+    <string name="label_continuous_sound">合成模式</string>
+    <string name="label_language_boost">语言增强</string>
+    <string name="label_english_normalization">英文文本规范化</string>
+
     <!-- 系统通知 -->
     <string name="system_notification_channel_name">系统通知</string>
     <string name="system_notification_channel_description">系统级的重要通知</string>

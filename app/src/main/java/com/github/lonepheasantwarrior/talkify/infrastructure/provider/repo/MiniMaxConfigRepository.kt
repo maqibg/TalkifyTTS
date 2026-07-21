@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.LanguageBoost
 import com.github.lonepheasantwarrior.talkify.domain.model.MiniMaxConfig
 import com.github.lonepheasantwarrior.talkify.domain.repository.ProviderConfigRepository
 
@@ -27,7 +28,19 @@ class MiniMaxConfigRepository(
             voiceId = sharedPreferences.getString("${prefsKey}_$KEY_VOICE_ID", "") ?: "",
             apiUrl = sharedPreferences.getString("${prefsKey}_$KEY_API_URL", "") ?: "",
             modelId = sharedPreferences.getString("${prefsKey}_$KEY_MODEL_ID", "") ?: "",
-            continuousSound = sharedPreferences.getBoolean("${prefsKey}_$KEY_CONTINUOUS_SOUND", true)
+            continuousSound = if (sharedPreferences.contains("${prefsKey}_$KEY_CONTINUOUS_SOUND")) {
+                sharedPreferences.getBoolean("${prefsKey}_$KEY_CONTINUOUS_SOUND", false)
+            } else {
+                null
+            },
+            languageBoost = try {
+                LanguageBoost.valueOf(
+                    sharedPreferences.getString("${prefsKey}_$KEY_LANGUAGE_BOOST", LanguageBoost.OFF.name) ?: LanguageBoost.OFF.name
+                )
+            } catch (_: IllegalArgumentException) {
+                LanguageBoost.OFF
+            },
+            englishNormalization = sharedPreferences.getBoolean("${prefsKey}_$KEY_ENGLISH_NORMALIZATION", false)
         )
     }
 
@@ -39,7 +52,13 @@ class MiniMaxConfigRepository(
                 .putString("${prefsKey}_$KEY_VOICE_ID", miniMaxConfig.voiceId)
                 .putString("${prefsKey}_$KEY_API_URL", miniMaxConfig.apiUrl)
                 .putString("${prefsKey}_$KEY_MODEL_ID", miniMaxConfig.modelId)
-                .putBoolean("${prefsKey}_$KEY_CONTINUOUS_SOUND", miniMaxConfig.continuousSound)
+                .also { edit ->
+                    miniMaxConfig.continuousSound?.let {
+                        edit.putBoolean("${prefsKey}_$KEY_CONTINUOUS_SOUND", it)
+                    } ?: edit.remove("${prefsKey}_$KEY_CONTINUOUS_SOUND")
+                }
+                .putString("${prefsKey}_$KEY_LANGUAGE_BOOST", miniMaxConfig.languageBoost.name)
+                .putBoolean("${prefsKey}_$KEY_ENGLISH_NORMALIZATION", miniMaxConfig.englishNormalization)
         }
     }
 
@@ -62,5 +81,7 @@ class MiniMaxConfigRepository(
         private const val KEY_API_URL = "api_url"
         private const val KEY_MODEL_ID = "model_id"
         private const val KEY_CONTINUOUS_SOUND = "continuous_sound"
+        private const val KEY_LANGUAGE_BOOST = "language_boost"
+        private const val KEY_ENGLISH_NORMALIZATION = "english_normalization"
     }
 }
