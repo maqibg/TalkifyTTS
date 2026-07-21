@@ -3,8 +3,9 @@ package com.github.lonepheasantwarrior.talkify.service.provider.impl
 import android.content.Context
 import android.speech.tts.Voice
 import com.github.lonepheasantwarrior.talkify.R
-import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.AzureConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.ProviderIds
 import com.github.lonepheasantwarrior.talkify.service.TtsErrorCode
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
 import com.github.lonepheasantwarrior.talkify.service.provider.AbstractTtsProvider
@@ -62,12 +63,9 @@ import kotlin.math.min
  *
  * 服务提供商：Azure
  */
-class MicrosoftTtsProvider : AbstractTtsProvider() {
+class AzureProvider : AbstractTtsProvider() {
 
     companion object {
-        const val PROVIDER_ID = "microsoft-tts"
-        const val PROVIDER_NAME = "微软语音合成"
-
         private const val BASE_URL = "speech.platform.bing.com/consumer/speech/synthesize/readaloud"
         private const val TRUSTED_CLIENT_TOKEN = "6A5AA1D4EAFF4E9FB37E23D68491D6F4"
         const val DEFAULT_WSS_URL = "wss://$BASE_URL/edge/v1?TrustedClientToken=$TRUSTED_CLIENT_TOKEN"
@@ -278,8 +276,9 @@ class MicrosoftTtsProvider : AbstractTtsProvider() {
         }
     }
 
-    override fun getProviderId(): String = PROVIDER_ID
-    override fun getProviderName(): String = PROVIDER_NAME
+    override fun getProviderId(): String = ProviderIds.Azure.providerId
+    override fun getProviderName(): String = ProviderIds.Azure.provider
+    override fun getDefaultModelId(): String = ProviderIds.Azure.defaultModelId
 
     override fun getDefaultApiUrl(): String = DEFAULT_WSS_URL
 

@@ -3,9 +3,10 @@ package com.github.lonepheasantwarrior.talkify.service.provider.impl
 import android.speech.tts.Voice
 import com.github.lonepheasantwarrior.talkify.R
 import com.github.lonepheasantwarrior.talkify.TalkifyAppHolder
-import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlParser
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.ProviderIds
 import com.github.lonepheasantwarrior.talkify.domain.model.TencentCloudConfig
+import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlParser
 import com.github.lonepheasantwarrior.talkify.service.TtsErrorCode
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
 import com.github.lonepheasantwarrior.talkify.service.provider.AbstractTtsProvider
@@ -28,11 +29,9 @@ import java.nio.ByteBuffer
 import java.util.Locale
 import java.util.UUID
 
-class TencentTtsProvider : AbstractTtsProvider() {
+class TencentCloudProvider : AbstractTtsProvider() {
 
     companion object {
-        const val PROVIDER_ID = "tencent-tts"
-        const val PROVIDER_NAME = "腾讯语音合成"
         const val DEFAULT_VOICE_ID = 101027
         private const val VOICE_NAME_SEPARATOR = "::"
 
@@ -156,9 +155,11 @@ class TencentTtsProvider : AbstractTtsProvider() {
         return voiceSampleRateMap[voiceId] ?: 16000
     }
 
-    override fun getProviderId(): String = PROVIDER_ID
+    override fun getProviderId(): String = ProviderIds.TencentCloud.providerId
 
-    override fun getProviderName(): String = PROVIDER_NAME
+    override fun getProviderName(): String = ProviderIds.TencentCloud.provider
+
+    override fun getDefaultModelId(): String = ProviderIds.TencentCloud.defaultModelId
 
     override fun synthesize(
         text: String, params: SynthesisParams, config: BaseProviderConfig, listener: TtsSynthesisListener
@@ -350,20 +351,20 @@ class TencentTtsProvider : AbstractTtsProvider() {
     ): FlowingSpeechSynthesizerRequest {
         val request = FlowingSpeechSynthesizerRequest()
 
-        request.setCodec("pcm")
-        request.setSampleRate(sampleRate)
-        request.setVoiceType(voiceId.toIntOrNull() ?: DEFAULT_VOICE_ID)
-        request.setEnableSubtitle(false)
-        request.setEmotionCategory("neutral")
-        request.setEmotionIntensity(100)
-        request.setSessionId(UUID.randomUUID().toString())
+        request.codec = "pcm"
+        request.sampleRate = sampleRate
+        request.voiceType = voiceId.toIntOrNull() ?: DEFAULT_VOICE_ID
+        request.enableSubtitle = false
+        request.emotionCategory = "neutral"
+        request.emotionIntensity = 100
+        request.sessionId = UUID.randomUUID().toString()
 
         val speed = convertSpeechRate(params.speechRate)
-        request.setSpeed(speed)
+        request.speed = speed
         logDebug("ttsSpeechRate: ${params.speechRate}, tencentSpeed: $speed")
 
         val volume = convertVolume(params.volume)
-        request.setVolume(volume)
+        request.volume = volume
         logDebug("ttsVolume: ${params.volume}, tencentVolume: $volume")
 
         return request
@@ -507,7 +508,7 @@ class TencentTtsProvider : AbstractTtsProvider() {
         currentVoiceId: String?
     ): String {
         val defaultVoice = voiceIds.firstOrNull() ?: DEFAULT_VOICE_ID.toString()
-        if (currentVoiceId != null && currentVoiceId.isNotBlank()) {
+        if (!currentVoiceId.isNullOrBlank()) {
             return "$currentVoiceId$VOICE_NAME_SEPARATOR$lang"
         }
         return "$defaultVoice$VOICE_NAME_SEPARATOR$lang"

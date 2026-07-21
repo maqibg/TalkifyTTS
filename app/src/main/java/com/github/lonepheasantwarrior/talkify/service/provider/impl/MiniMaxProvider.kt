@@ -3,9 +3,10 @@ package com.github.lonepheasantwarrior.talkify.service.provider.impl
 import android.speech.tts.Voice
 import com.github.lonepheasantwarrior.talkify.R
 import com.github.lonepheasantwarrior.talkify.TalkifyAppHolder
-import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlParser
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.MiniMaxConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.ProviderIds
+import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlParser
 import com.github.lonepheasantwarrior.talkify.service.TtsErrorCode
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
 import com.github.lonepheasantwarrior.talkify.service.provider.AbstractTtsProvider
@@ -49,14 +50,11 @@ import kotlin.math.roundToInt
  * 服务提供商：MiniMax
  * API 文档：https://platform.minimaxi.com/docs/llms.txt
  */
-class MiniMaxTtsProvider : AbstractTtsProvider() {
+class MiniMaxProvider : AbstractTtsProvider() {
 
     companion object {
-        const val PROVIDER_ID = "minimax-tts"
-        const val PROVIDER_NAME = "MiniMax语音合成"
         private const val VOICE_NAME_SEPARATOR = "::"
         const val DEFAULT_WSS_URL = "wss://api.minimaxi.com/ws/v1/t2a_v2"
-        const val DEFAULT_MODEL = "speech-2.8-turbo"
 
         private const val MAX_TEXT_LENGTH = 10000
 
@@ -110,13 +108,13 @@ class MiniMaxTtsProvider : AbstractTtsProvider() {
         }
     }
 
-    override fun getProviderId(): String = PROVIDER_ID
+    override fun getProviderId(): String = ProviderIds.MiniMax.providerId
 
-    override fun getProviderName(): String = PROVIDER_NAME
+    override fun getProviderName(): String = ProviderIds.MiniMax.provider
 
     override fun getDefaultApiUrl(): String = DEFAULT_WSS_URL
 
-    override fun getDefaultModelId(): String = DEFAULT_MODEL
+    override fun getDefaultModelId(): String = ProviderIds.MiniMax.defaultModelId
 
     override fun getAudioConfig(): AudioConfig = audioConfig
 
@@ -447,7 +445,7 @@ class MiniMaxTtsProvider : AbstractTtsProvider() {
             val pitch = ((params.pitch - 100f) * 12f / 100f).roundToInt().coerceIn(-12, 12)
             val emotion = resolveEmotion(params)
 
-            val effectiveModel = config.modelId.ifBlank { DEFAULT_MODEL }
+            val effectiveModel = config.modelId.ifBlank { getDefaultModelId() }
             val message = JSONObject().apply {
                 put("event", "task_start")
                 put("model", effectiveModel)

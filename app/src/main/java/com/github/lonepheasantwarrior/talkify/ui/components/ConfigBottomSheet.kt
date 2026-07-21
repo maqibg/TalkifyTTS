@@ -23,14 +23,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.github.lonepheasantwarrior.talkify.R
+import com.github.lonepheasantwarrior.talkify.domain.model.AliyunBailianConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.AzureConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.ConfigItem
-import com.github.lonepheasantwarrior.talkify.domain.model.AzureConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.MiniMaxConfig
-import com.github.lonepheasantwarrior.talkify.domain.model.AliyunBailianConfig
-import com.github.lonepheasantwarrior.talkify.domain.model.VolcengineConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.TencentCloudConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.TtsProvider
+import com.github.lonepheasantwarrior.talkify.domain.model.VolcengineConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.XiaomiConfig
 import com.github.lonepheasantwarrior.talkify.domain.repository.ProviderConfigRepository
 import com.github.lonepheasantwarrior.talkify.domain.repository.VoiceInfo

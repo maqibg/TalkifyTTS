@@ -2,10 +2,10 @@ package com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.MiniMaxConfig
 import com.github.lonepheasantwarrior.talkify.domain.repository.ProviderConfigRepository
-import androidx.core.content.edit
 
 /**
  * MiniMax 语音合成供应商 - 配置仓储实现

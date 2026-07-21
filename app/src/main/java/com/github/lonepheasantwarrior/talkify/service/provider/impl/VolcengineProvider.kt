@@ -4,9 +4,10 @@ import android.speech.tts.Voice
 import android.util.Base64
 import com.github.lonepheasantwarrior.talkify.R
 import com.github.lonepheasantwarrior.talkify.TalkifyAppHolder
-import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlParser
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.ProviderIds
 import com.github.lonepheasantwarrior.talkify.domain.model.VolcengineConfig
+import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlParser
 import com.github.lonepheasantwarrior.talkify.service.TtsErrorCode
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
 import com.github.lonepheasantwarrior.talkify.service.provider.AbstractTtsProvider
@@ -40,18 +41,15 @@ import kotlin.math.roundToInt
  * 基于 OkHttp 实现 HTTP 流式音频合成，支持连接复用
  * 将音频数据块实时回调给系统
  *
- * 供应商 ID：seed-tts-2.0
+ * 供应商 ID：volcengine
  * 服务提供商：火山引擎
  * API 文档：https://www.volcengine.com/docs/6561/1598757
  */
-class SeedTts2Provider : AbstractTtsProvider() {
+class VolcengineProvider : AbstractTtsProvider() {
 
     companion object {
-        const val PROVIDER_ID = "seed-tts-2.0"
-        const val PROVIDER_NAME = "豆包语音合成2.0"
         private const val VOICE_NAME_SEPARATOR = "::"
         const val DEFAULT_API_URL = "https://openspeech.bytedance.com/api/v3/tts/unidirectional"
-        const val DEFAULT_RESOURCE_ID = "seed-tts-2.0"
 
         // 文本分块配置
         private const val MAX_TEXT_LENGTH = 300
@@ -117,13 +115,13 @@ class SeedTts2Provider : AbstractTtsProvider() {
         }
     }
 
-    override fun getProviderId(): String = PROVIDER_ID
+    override fun getProviderId(): String = ProviderIds.Volcengine.providerId
 
-    override fun getProviderName(): String = PROVIDER_NAME
+    override fun getProviderName(): String = ProviderIds.Volcengine.provider
 
     override fun getDefaultApiUrl(): String = DEFAULT_API_URL
 
-    override fun getDefaultModelId(): String = DEFAULT_RESOURCE_ID
+    override fun getDefaultModelId(): String = ProviderIds.Volcengine.defaultModelId
 
     override fun getAudioConfig(): AudioConfig = audioConfig
 
@@ -434,7 +432,7 @@ class SeedTts2Provider : AbstractTtsProvider() {
         val body = requestBody.toString().toRequestBody(mediaType)
 
         val effectiveApiUrl = config.apiUrl.ifBlank { DEFAULT_API_URL }
-        val effectiveResourceId = config.modelId.ifBlank { DEFAULT_RESOURCE_ID }
+        val effectiveResourceId = config.modelId.ifBlank { getDefaultModelId() }
 
         val request = Request.Builder()
             .url(effectiveApiUrl)

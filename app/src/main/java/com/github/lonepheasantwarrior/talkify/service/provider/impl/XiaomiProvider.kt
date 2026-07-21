@@ -4,9 +4,10 @@ import android.speech.tts.Voice
 import android.util.Base64
 import com.github.lonepheasantwarrior.talkify.R
 import com.github.lonepheasantwarrior.talkify.TalkifyAppHolder
-import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlParser
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.ProviderIds
 import com.github.lonepheasantwarrior.talkify.domain.model.XiaomiConfig
+import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlParser
 import com.github.lonepheasantwarrior.talkify.service.TtsErrorCode
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
 import com.github.lonepheasantwarrior.talkify.service.provider.AbstractTtsProvider
@@ -39,18 +40,15 @@ import java.util.concurrent.TimeUnit
  * 基于 OkHttp 实现 HTTP 流式音频合成，支持连接复用
  * 将音频数据块实时回调给系统
  *
- * 供应商 ID：xiaomi-mimo-tts
+ * 供应商 ID：xiaomi
  * 服务提供商：小米
  * API 文档：https://platform.xiaomimimo.com/docs/zh-CN/usage-guide/speech-synthesis
  */
-class XiaoMiMimoTtsProvider : AbstractTtsProvider() {
+class XiaomiProvider : AbstractTtsProvider() {
 
     companion object {
-        const val PROVIDER_ID = "xiaomi-mimo-tts"
-        const val PROVIDER_NAME = "小米MiMo语音合成"
         private const val VOICE_NAME_SEPARATOR = "::"
         const val DEFAULT_API_URL = "https://api.xiaomimimo.com/v1/chat/completions"
-        const val DEFAULT_MODEL = "mimo-v2-tts"
 
         // 文本分块配置
         private const val MAX_TEXT_LENGTH = 768
@@ -117,13 +115,13 @@ class XiaoMiMimoTtsProvider : AbstractTtsProvider() {
         }
     }
 
-    override fun getProviderId(): String = PROVIDER_ID
+    override fun getProviderId(): String = ProviderIds.Xiaomi.providerId
 
-    override fun getProviderName(): String = PROVIDER_NAME
+    override fun getProviderName(): String = ProviderIds.Xiaomi.provider
 
     override fun getDefaultApiUrl(): String = DEFAULT_API_URL
 
-    override fun getDefaultModelId(): String = DEFAULT_MODEL
+    override fun getDefaultModelId(): String = ProviderIds.Xiaomi.defaultModelId
 
     override fun getAudioConfig(): AudioConfig = audioConfig
 
@@ -432,7 +430,7 @@ class XiaoMiMimoTtsProvider : AbstractTtsProvider() {
         val effectiveVoice = resolveVoiceForLanguage(voiceId, params.language)
 
         // 构建请求体 - OpenAI Chat Completions 格式
-        val effectiveModel = config.modelId.ifBlank { DEFAULT_MODEL }
+        val effectiveModel = config.modelId.ifBlank { getDefaultModelId() }
         val requestBody = JSONObject().apply {
             put("model", effectiveModel)
             put("messages", org.json.JSONArray().put(
@@ -641,7 +639,7 @@ class XiaoMiMimoTtsProvider : AbstractTtsProvider() {
         currentVoiceId: String?
     ): String {
         val defaultVoice = voiceIds.firstOrNull() ?: "mimo_default"
-        if (currentVoiceId != null && currentVoiceId.isNotBlank()) {
+        if (!currentVoiceId.isNullOrBlank()) {
             return "$currentVoiceId$VOICE_NAME_SEPARATOR$lang"
         }
         return "$defaultVoice$VOICE_NAME_SEPARATOR$lang"

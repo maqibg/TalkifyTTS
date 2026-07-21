@@ -36,7 +36,7 @@ sealed class ProviderIds {
      */
     data object AliyunBailian : ProviderIds() {
         override val providerId: String = "aliyunBailian"
-        override val defaultModelId: String = "qwen3-tts"
+        override val defaultModelId: String = "qwen3-tts-flash"
         override val provider: String = "阿里云百炼"
     }
 
@@ -54,7 +54,7 @@ sealed class ProviderIds {
      */
     data object Xiaomi : ProviderIds() {
         override val providerId: String = "xiaomi"
-        override val defaultModelId: String = "xiaomi-mimo-tts"
+        override val defaultModelId: String = "mimo-v2-tts"
         override val provider: String = "小米"
     }
 
@@ -63,7 +63,7 @@ sealed class ProviderIds {
      */
     data object MiniMax : ProviderIds() {
         override val providerId: String = "miniMax"
-        override val defaultModelId: String = "minimax-tts"
+        override val defaultModelId: String = "speech-2.8-turbo"
         override val provider: String = "MiniMax"
     }
 

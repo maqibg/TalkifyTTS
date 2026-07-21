@@ -11,8 +11,9 @@ import com.alibaba.dashscope.exception.NoApiKeyException
 import com.alibaba.dashscope.exception.UploadFileException
 import com.alibaba.dashscope.utils.Constants
 import com.github.lonepheasantwarrior.talkify.R
-import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.AliyunBailianConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.ProviderIds
 import com.github.lonepheasantwarrior.talkify.service.TtsErrorCode
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
 import com.github.lonepheasantwarrior.talkify.service.provider.AbstractTtsProvider
@@ -32,17 +33,13 @@ import java.util.Locale
  * 继承 [AbstractTtsProvider]，实现 TTS 供应商接口
  * 支持流式音频合成，将音频数据块实时回调给系统
  *
- * 供应商 ID：qwen3-tts
+ * 供应商 ID：aliyunBailian
  * 服务提供商：阿里云百炼
  */
-class Qwen3TtsProvider : AbstractTtsProvider() {
+class AliyunBailianProvider : AbstractTtsProvider() {
 
     companion object {
-        const val PROVIDER_ID = "qwen3-tts"
-        const val PROVIDER_NAME = "通义千问3语音合成"
-
         const val DEFAULT_API_URL = "https://dashscope.aliyuncs.com/api/v1"
-        const val DEFAULT_MODEL = "qwen3-tts-flash"
 
         private const val DEFAULT_LANGUAGE = "Auto"
 
@@ -71,13 +68,13 @@ class Qwen3TtsProvider : AbstractTtsProvider() {
         Constants.baseHttpApiUrl = DEFAULT_API_URL
     }
 
-    override fun getProviderId(): String = PROVIDER_ID
+    override fun getProviderId(): String = ProviderIds.AliyunBailian.providerId
 
-    override fun getProviderName(): String = PROVIDER_NAME
+    override fun getProviderName(): String = ProviderIds.AliyunBailian.provider
 
     override fun getDefaultApiUrl(): String = DEFAULT_API_URL
 
-    override fun getDefaultModelId(): String = DEFAULT_MODEL
+    override fun getDefaultModelId(): String = ProviderIds.AliyunBailian.defaultModelId
 
     override fun synthesize(
         text: String, params: SynthesisParams, config: BaseProviderConfig, listener: TtsSynthesisListener
@@ -398,7 +395,7 @@ class Qwen3TtsProvider : AbstractTtsProvider() {
         Constants.baseHttpApiUrl = effectiveApiUrl
 
         // 用户自定义模型 ID 优先，为空时回退到默认模型
-        val effectiveModel = config.modelId.ifBlank { DEFAULT_MODEL }
+        val effectiveModel = config.modelId.ifBlank { getDefaultModelId() }
 
         return MultiModalConversationParam.builder().apiKey(config.apiKey)
             .model(effectiveModel).text(text).voice(voice).languageType(languageType)

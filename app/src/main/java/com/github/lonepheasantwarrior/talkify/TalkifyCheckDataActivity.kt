@@ -7,8 +7,8 @@ import android.speech.tts.TextToSpeech
 import com.github.lonepheasantwarrior.talkify.domain.model.ProviderIds
 import com.github.lonepheasantwarrior.talkify.infrastructure.app.repo.SharedPreferencesAppConfigRepository
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
-import com.github.lonepheasantwarrior.talkify.service.provider.impl.Qwen3TtsProvider
-import com.github.lonepheasantwarrior.talkify.service.provider.impl.SeedTts2Provider
+import com.github.lonepheasantwarrior.talkify.service.provider.impl.AliyunBailianProvider
+import com.github.lonepheasantwarrior.talkify.service.provider.impl.VolcengineProvider
 
 /**
  * TTS 数据检查 Activity
@@ -66,10 +66,10 @@ class TalkifyCheckDataActivity : Activity() {
         // 根据供应商 ID 获取对应的静态语言列表
         return when (selectedProviderId) {
             ProviderIds.Volcengine.providerId -> {
-                ArrayList(SeedTts2Provider.SUPPORTED_LANGUAGES.toList())
+                ArrayList(VolcengineProvider.SUPPORTED_LANGUAGES.toList())
             }
             else -> {
-                ArrayList(Qwen3TtsProvider.SUPPORTED_LANGUAGES.toList())
+                ArrayList(AliyunBailianProvider.SUPPORTED_LANGUAGES.toList())
             }
         }
     }

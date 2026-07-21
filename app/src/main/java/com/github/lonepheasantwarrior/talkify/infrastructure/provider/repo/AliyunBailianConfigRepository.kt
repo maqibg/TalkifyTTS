@@ -2,8 +2,8 @@ package com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.AliyunBailianConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
 import com.github.lonepheasantwarrior.talkify.domain.repository.ProviderConfigRepository
 import com.github.lonepheasantwarrior.talkify.infrastructure.app.repo.SharedPreferencesAppConfigRepository
 
