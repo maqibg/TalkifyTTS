@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.XiaomiConfig
 import com.github.lonepheasantwarrior.talkify.domain.repository.ProviderConfigRepository
+import androidx.core.content.edit
 
 /**
  * 小米 MiMo 语音合成供应商 - 配置仓储实现
@@ -25,19 +26,21 @@ class XiaomiConfigRepository(
             apiKey = sharedPreferences.getString("${prefsKey}_$KEY_API_KEY", "") ?: "",
             voiceId = sharedPreferences.getString("${prefsKey}_$KEY_VOICE_ID", "") ?: "",
             apiUrl = sharedPreferences.getString("${prefsKey}_$KEY_API_URL", "") ?: "",
-            modelId = sharedPreferences.getString("${prefsKey}_$KEY_MODEL_ID", "") ?: ""
+            modelId = sharedPreferences.getString("${prefsKey}_$KEY_MODEL_ID", "") ?: "",
+            styleInstruction = sharedPreferences.getString("${prefsKey}_$KEY_STYLE_INSTRUCTION", "") ?: ""
         )
     }
 
     override fun saveConfig(providerId: String, config: BaseProviderConfig) {
         val prefsKey = getPrefsKey(providerId)
         val mimoConfig = config as? XiaomiConfig ?: return
-        sharedPreferences.edit()
-            .putString("${prefsKey}_$KEY_API_KEY", mimoConfig.apiKey)
-            .putString("${prefsKey}_$KEY_VOICE_ID", mimoConfig.voiceId)
-            .putString("${prefsKey}_$KEY_API_URL", mimoConfig.apiUrl)
-            .putString("${prefsKey}_$KEY_MODEL_ID", mimoConfig.modelId)
-            .apply()
+        sharedPreferences.edit {
+            putString("${prefsKey}_$KEY_API_KEY", mimoConfig.apiKey)
+                .putString("${prefsKey}_$KEY_VOICE_ID", mimoConfig.voiceId)
+                .putString("${prefsKey}_$KEY_API_URL", mimoConfig.apiUrl)
+                .putString("${prefsKey}_$KEY_MODEL_ID", mimoConfig.modelId)
+                .putString("${prefsKey}_$KEY_STYLE_INSTRUCTION", mimoConfig.styleInstruction)
+        }
     }
 
     override fun hasConfig(providerId: String): Boolean {
@@ -45,7 +48,8 @@ class XiaomiConfigRepository(
         return sharedPreferences.contains("${prefsKey}_$KEY_API_KEY") ||
                 sharedPreferences.contains("${prefsKey}_$KEY_VOICE_ID") ||
                 sharedPreferences.contains("${prefsKey}_$KEY_API_URL") ||
-                sharedPreferences.contains("${prefsKey}_$KEY_MODEL_ID")
+                sharedPreferences.contains("${prefsKey}_$KEY_MODEL_ID") ||
+                sharedPreferences.contains("${prefsKey}_$KEY_STYLE_INSTRUCTION")
     }
 
     private fun getPrefsKey(providerId: String): String {
@@ -58,5 +62,6 @@ class XiaomiConfigRepository(
         private const val KEY_VOICE_ID = "voice_id"
         private const val KEY_API_URL = "api_url"
         private const val KEY_MODEL_ID = "model_id"
+        private const val KEY_STYLE_INSTRUCTION = "style_instruction"
     }
 }

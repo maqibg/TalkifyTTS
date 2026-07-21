@@ -14,7 +14,7 @@ class XiaomiVoiceRepository(
 ) : VoiceRepository {
 
     private val voices: List<VoiceXmlEntry> by lazy {
-        VoiceXmlParser.parse(context, R.xml.xiaomi_mimo_voices)
+        VoiceXmlParser.parse(context, R.xml.xiaomi_mimo_voices_v2p5)
     }
 
     override suspend fun getVoicesForProvider(provider: TtsProvider): List<VoiceInfo> {

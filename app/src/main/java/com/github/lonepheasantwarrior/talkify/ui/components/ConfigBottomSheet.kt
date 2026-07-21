@@ -332,6 +332,17 @@ private fun buildConfigItems(
                     )
                 )
             }
+            val styleLabel = getLabel("style_instruction")
+            if (styleLabel != null) {
+                items.add(
+                    ConfigItem(
+                        key = "style_instruction",
+                        label = styleLabel,
+                        value = config.styleInstruction,
+                        placeholder = "例如：用温柔的语气朗读"
+                    )
+                )
+            }
         }
         is MiniMaxConfig -> {
             val label = getLabel("api_key")
@@ -428,11 +439,13 @@ private fun buildConfigFromItems(
         }
         is XiaomiConfig -> {
             val apiKey = items.find { it.key == "api_key" }?.value ?: ""
+            val styleInstruction = items.find { it.key == "style_instruction" }?.value ?: ""
             XiaomiConfig(
                 apiKey = apiKey,
                 voiceId = voiceId,
                 apiUrl = apiUrl,
-                modelId = modelId
+                modelId = modelId,
+                styleInstruction = styleInstruction
             )
         }
         is MiniMaxConfig -> {

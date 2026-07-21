@@ -42,7 +42,8 @@ import java.util.concurrent.TimeUnit
  *
  * 供应商 ID：xiaomi
  * 服务提供商：小米
- * API 文档：https://platform.xiaomimimo.com/docs/zh-CN/usage-guide/speech-synthesis
+ * API 模型：mimo-v2.5-tts (MiMo Speech Synthesis v2.5)
+ * API 文档：https://mimo.mi.com/docs/zh-CN/quick-start/usage-guide/audio/speech-synthesis-v2.5
  */
 class XiaomiProvider : AbstractTtsProvider() {
 
@@ -429,16 +430,25 @@ class XiaomiProvider : AbstractTtsProvider() {
 
         val effectiveVoice = resolveVoiceForLanguage(voiceId, params.language)
 
-        // 构建请求体 - OpenAI Chat Completions 格式
+        // 构建请求体 - 小米 MiMo v2.5 Speech Synthesis 格式
+        // v2.5 API 支持 user role 用于风格指令（自然语言描述朗读风格、语气等）
         val effectiveModel = config.modelId.ifBlank { getDefaultModelId() }
         val requestBody = JSONObject().apply {
             put("model", effectiveModel)
-            put("messages", org.json.JSONArray().put(
-                JSONObject().apply {
+            put("messages", org.json.JSONArray().apply {
+                // user role: 可选的风格指令（v2.5 新特性）
+                if (config.styleInstruction.isNotBlank()) {
+                    put(JSONObject().apply {
+                        put("role", "user")
+                        put("content", config.styleInstruction)
+                    })
+                }
+                // assistant role: 实际合成文本（必需，v2.5 API 当前仅支持一个 assistant 消息）
+                put(JSONObject().apply {
                     put("role", "assistant")
                     put("content", text)
-                }
-            ))
+                })
+            })
             put("audio", JSONObject().apply {
                 put("format", "pcm16")
                 put("voice", effectiveVoice)
@@ -695,6 +705,7 @@ class XiaomiProvider : AbstractTtsProvider() {
     override fun getConfigLabel(configKey: String, context: android.content.Context): String? {
         return when (configKey) {
             "api_key" -> context.getString(R.string.api_key_label)
+            "style_instruction" -> context.getString(R.string.label_style_instruction)
             else -> super.getConfigLabel(configKey, context)
         }
     }

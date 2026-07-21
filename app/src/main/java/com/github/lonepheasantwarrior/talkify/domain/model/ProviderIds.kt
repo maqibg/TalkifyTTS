@@ -54,7 +54,7 @@ sealed class ProviderIds {
      */
     data object Xiaomi : ProviderIds() {
         override val providerId: String = "xiaomi"
-        override val defaultModelId: String = "mimo-v2-tts"
+        override val defaultModelId: String = "mimo-v2.5-tts"
         override val provider: String = "小米"
     }
 
