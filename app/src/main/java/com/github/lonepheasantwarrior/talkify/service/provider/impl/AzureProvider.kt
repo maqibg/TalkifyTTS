@@ -10,6 +10,7 @@ import com.github.lonepheasantwarrior.talkify.service.TtsErrorCode
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
 import com.github.lonepheasantwarrior.talkify.service.provider.AbstractTtsProvider
 import com.github.lonepheasantwarrior.talkify.service.provider.AudioConfig
+import com.github.lonepheasantwarrior.talkify.service.provider.Mp3StreamDecoder
 import com.github.lonepheasantwarrior.talkify.service.provider.SynthesisParams
 import com.github.lonepheasantwarrior.talkify.service.provider.TtsSynthesisListener
 import javazoom.jl.decoder.Bitstream
@@ -34,8 +35,6 @@ import okhttp3.WebSocketListener
 import okio.ByteString
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -289,7 +288,7 @@ class AzureProvider : AbstractTtsProvider() {
 
         val msConfig = config as? AzureConfig
         if (msConfig == null) {
-            logError("Invalid config type, expected MicrosoftTtsConfig")
+            logError("Invalid config type, expected AzureConfig")
             listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_PROVIDER_NOT_CONFIGURED))
             return
         }
@@ -836,7 +835,7 @@ class AzureProvider : AbstractTtsProvider() {
                 val sampleCount = sampleBuffer.bufferLength
 
                 if (sampleCount > 0) {
-                    val pcmBytes = shortArrayToByteArray(samples, sampleCount)
+                    val pcmBytes = Mp3StreamDecoder.shortArrayToByteArray(samples, sampleCount)
                     listener.onAudioAvailable(
                         pcmBytes,
                         sampleRate,
@@ -853,15 +852,6 @@ class AzureProvider : AbstractTtsProvider() {
             try { bitstream.close() } catch (_: Exception) {}
             try { inputStream.close() } catch (_: Exception) {}
         }
-    }
-
-    /**
-     * 高性能 PCM 转换方案：利用 NIO ByteBuffer 内存块直接复制机制
-     */
-    private fun shortArrayToByteArray(shortArray: ShortArray, length: Int): ByteArray {
-        val buffer = ByteBuffer.allocate(length * 2).order(ByteOrder.LITTLE_ENDIAN)
-        buffer.asShortBuffer().put(shortArray, 0, length)
-        return buffer.array()
     }
 
     // ==================== WebSocket 消息构建 ====================

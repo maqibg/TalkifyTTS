@@ -13,6 +13,7 @@ import com.github.lonepheasantwarrior.talkify.service.TtsLogger
 import com.github.lonepheasantwarrior.talkify.service.provider.AbstractTtsProvider
 import com.github.lonepheasantwarrior.talkify.service.provider.AudioConfig
 import com.github.lonepheasantwarrior.talkify.service.provider.SynthesisParams
+import com.github.lonepheasantwarrior.talkify.service.provider.TextChunkSplitter
 import com.github.lonepheasantwarrior.talkify.service.provider.TtsSynthesisListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -102,18 +103,7 @@ class XiaomiProvider : AbstractTtsProvider() {
      * 从资源文件加载声音ID列表
      */
     private fun loadVoiceIdsFromResource(): List<String> {
-        val context = TalkifyAppHolder.getContext()
-        return if (context != null) {
-            try {
-                VoiceXmlParser.parseVoiceIds(context, R.xml.xiaomi_mimo_voices_v2p5)
-            } catch (e: Exception) {
-                TtsLogger.e("Failed to load voice IDs from resource", throwable = e)
-                emptyList()
-            }
-        } else {
-            TtsLogger.w("Context not available, voice IDs will be empty")
-            emptyList()
-        }
+        return loadVoiceIdsFromXml(R.xml.xiaomi_mimo_voices_v2p5)
     }
 
     override fun getProviderId(): String = ProviderIds.Xiaomi.providerId
@@ -133,7 +123,7 @@ class XiaomiProvider : AbstractTtsProvider() {
 
         val mimoConfig = config as? XiaomiConfig
         if (mimoConfig == null) {
-            logError("Invalid config type, expected XiaoMiMimoConfig")
+            logError("Invalid config type, expected XiaomiConfig")
             listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_PROVIDER_NOT_CONFIGURED))
             return
         }
@@ -164,7 +154,7 @@ class XiaomiProvider : AbstractTtsProvider() {
         isFirstChunk = true
 
         // 将文本分块处理
-        val textChunks = splitTextIntoChunks(text, MAX_TEXT_LENGTH)
+        val textChunks = TextChunkSplitter.split(text, MAX_TEXT_LENGTH)
         if (textChunks.isEmpty()) {
             listener.onError("文本为空")
             return
@@ -527,93 +517,6 @@ class XiaomiProvider : AbstractTtsProvider() {
         }
     }
 
-    /**
-     * 将文本分割为块
-     */
-    private fun splitTextIntoChunks(text: String, maxLength: Int): List<String> {
-        if (text.isEmpty()) return emptyList()
-        if (text.length <= maxLength) return listOf(text)
-
-        val chunks = mutableListOf<String>()
-        var lastSplitPos = 0
-
-        var i = 0
-        while (i < text.length) {
-            val remainingLength = text.length - lastSplitPos
-
-            if (remainingLength <= maxLength) {
-                chunks.add(text.substring(lastSplitPos))
-                break
-            }
-
-            val isSentenceEnd = checkSentenceEnd(text, i)
-            val isMidPause = checkMidPause(text, i)
-
-            if (isSentenceEnd || isMidPause) {
-                val chunkLength = i - lastSplitPos + 1
-                if (chunkLength <= maxLength) {
-                    chunks.add(text.substring(lastSplitPos, i + 1))
-                    lastSplitPos = i + 1
-                    i++
-                    continue
-                }
-            }
-
-            val splitPos = findBestSplitPos(text, lastSplitPos, maxLength)
-            if (splitPos > lastSplitPos) {
-                chunks.add(text.substring(lastSplitPos, splitPos))
-                lastSplitPos = splitPos
-            } else {
-                chunks.add(text.substring(lastSplitPos, lastSplitPos + maxLength))
-                lastSplitPos += maxLength
-            }
-            i = lastSplitPos
-        }
-
-        return chunks
-    }
-
-    private fun checkSentenceEnd(text: String, index: Int): Boolean {
-        if (index < 0) return false
-        val sentenceEnds = listOf("。", "！", "？", ".", "!", "?")
-        for (ender in sentenceEnds) {
-            if (text.regionMatches(index, ender, 0, ender.length)) {
-                return true
-            }
-        }
-        return false
-    }
-
-    private fun checkMidPause(text: String, index: Int): Boolean {
-        if (index < 0) return false
-        val midPauses = listOf("，", "、", ",", ";", "；", "：", ":")
-        for (pause in midPauses) {
-            if (text.regionMatches(index, pause, 0, pause.length)) {
-                return true
-            }
-        }
-        return false
-    }
-
-    private fun findBestSplitPos(text: String, startPos: Int, maxLength: Int): Int {
-        val searchEnd = minOf(startPos + maxLength, text.length)
-
-        for (i in searchEnd - 1 downTo startPos + 1) {
-            if (checkMidPause(text, i)) {
-                return i + 1
-            }
-        }
-
-        for (i in searchEnd - 1 downTo startPos + 1) {
-            val char = text[i]
-            if (char == ' ' || char == '\n' || char == '\t') {
-                return i + 1
-            }
-        }
-
-        return searchEnd
-    }
-
     override fun getSupportedLanguages(): Set<String> {
         return SUPPORTED_LANGUAGES.toSet()
     }
@@ -663,14 +566,6 @@ class XiaomiProvider : AbstractTtsProvider() {
         return realVoiceName != null && voiceIds.contains(realVoiceName)
     }
 
-    private fun extractRealVoiceName(androidVoiceName: String?): String? {
-        if (androidVoiceName == null) return null
-        return if (androidVoiceName.contains(VOICE_NAME_SEPARATOR)) {
-            androidVoiceName.substringBefore(VOICE_NAME_SEPARATOR)
-        } else {
-            androidVoiceName
-        }
-    }
 
     override fun stop() {
         logInfo("Stopping synthesis")

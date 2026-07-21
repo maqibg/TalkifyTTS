@@ -12,7 +12,9 @@ import com.github.lonepheasantwarrior.talkify.service.TtsErrorCode
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
 import com.github.lonepheasantwarrior.talkify.service.provider.AbstractTtsProvider
 import com.github.lonepheasantwarrior.talkify.service.provider.AudioConfig
+import com.github.lonepheasantwarrior.talkify.service.provider.Mp3StreamDecoder
 import com.github.lonepheasantwarrior.talkify.service.provider.SynthesisParams
+import com.github.lonepheasantwarrior.talkify.service.provider.TextChunkSplitter
 import com.github.lonepheasantwarrior.talkify.service.provider.TtsSynthesisListener
 import javazoom.jl.decoder.Bitstream
 import javazoom.jl.decoder.Decoder
@@ -34,8 +36,6 @@ import okhttp3.WebSocketListener
 import org.json.JSONObject
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -95,18 +95,7 @@ class MiniMaxProvider : AbstractTtsProvider() {
         @JvmName("getAudioConfigProperty") get() = AudioConfig.MINI_MAX_TTS
 
     private fun loadVoiceIdsFromResource(): List<String> {
-        val context = TalkifyAppHolder.getContext()
-        return if (context != null) {
-            try {
-                VoiceXmlParser.parseVoiceIds(context, R.xml.minimax_voices)
-            } catch (e: Exception) {
-                TtsLogger.e("Failed to load voice IDs from resource", throwable = e)
-                emptyList()
-            }
-        } else {
-            TtsLogger.w("Context not available, voice IDs will be empty")
-            emptyList()
-        }
+        return loadVoiceIdsFromXml(R.xml.minimax_voices)
     }
 
     override fun getProviderId(): String = ProviderIds.MiniMax.providerId
@@ -129,7 +118,7 @@ class MiniMaxProvider : AbstractTtsProvider() {
 
         val miniMaxConfig = config as? MiniMaxConfig
         if (miniMaxConfig == null) {
-            logError("Invalid config type, expected MiniMaxTtsConfig")
+            logError("Invalid config type, expected MiniMaxConfig")
             listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_PROVIDER_NOT_CONFIGURED))
             return
         }
@@ -235,7 +224,7 @@ class MiniMaxProvider : AbstractTtsProvider() {
                 return
             }
 
-            val textChunks = splitTextIntoChunks(text, MAX_TEXT_LENGTH)
+            val textChunks = TextChunkSplitter.split(text, MAX_TEXT_LENGTH)
             logDebug("Text split into ${textChunks.size} chunks for WebSocket streaming")
 
             wsListener.sendTextChunks(webSocket, textChunks)
@@ -584,7 +573,7 @@ class MiniMaxProvider : AbstractTtsProvider() {
                 val sampleCount = sampleBuffer.bufferLength
 
                 if (sampleCount > 0) {
-                    val pcmBytes = shortArrayToByteArray(samples, sampleCount)
+                    val pcmBytes = Mp3StreamDecoder.shortArrayToByteArray(samples, sampleCount)
                     listener.onAudioAvailable(
                         pcmBytes,
                         sampleRate,
@@ -607,21 +596,6 @@ class MiniMaxProvider : AbstractTtsProvider() {
             } catch (_: Exception) {
             }
         }
-    }
-
-    /**
-     * 将 ShortArray 转换为小端序字节数组
-     *
-     * 解码后的 PCM 样本为 short 数组，需转换为 byte 数组供音频播放器使用
-     *
-     * @param shortArray PCM 样本数组
-     * @param length 有效样本数量
-     * @return 小端序的 16-bit PCM 字节数组
-     */
-    private fun shortArrayToByteArray(shortArray: ShortArray, length: Int): ByteArray {
-        val buffer = ByteBuffer.allocate(length * 2).order(ByteOrder.LITTLE_ENDIAN)
-        buffer.asShortBuffer().put(shortArray, 0, length)
-        return buffer.array()
     }
 
     /**
@@ -716,126 +690,6 @@ class MiniMaxProvider : AbstractTtsProvider() {
     }
 
     /**
-     * 将长文本按句子边界智能分割为多个片段
-     *
-     * 优先在句子结尾标点（。！？.!?）处分割，
-     * 其次在句中停顿标点（，、,;；：:）处分割，
-     * 最后在空格或换行处分割。保证每个片段不超过 [maxLength] 字符
-     *
-     * @param text 待分割的原始文本
-     * @param maxLength 每个片段的最大字符数
-     * @return 分割后的文本片段列表
-     */
-    private fun splitTextIntoChunks(text: String, maxLength: Int): List<String> {
-        if (text.isEmpty()) return emptyList()
-        if (text.length <= maxLength) return listOf(text)
-
-        val chunks = mutableListOf<String>()
-        var lastSplitPos = 0
-
-        var i = 0
-        while (i < text.length) {
-            val remainingLength = text.length - lastSplitPos
-
-            if (remainingLength <= maxLength) {
-                chunks.add(text.substring(lastSplitPos))
-                break
-            }
-
-            val isSentenceEnd = checkSentenceEnd(text, i)
-            val isMidPause = checkMidPause(text, i)
-
-            if (isSentenceEnd || isMidPause) {
-                val chunkLength = i - lastSplitPos + 1
-                if (chunkLength <= maxLength) {
-                    chunks.add(text.substring(lastSplitPos, i + 1))
-                    lastSplitPos = i + 1
-                    i++
-                    continue
-                }
-            }
-
-            val splitPos = findBestSplitPos(text, lastSplitPos, maxLength)
-            if (splitPos > lastSplitPos) {
-                chunks.add(text.substring(lastSplitPos, splitPos))
-                lastSplitPos = splitPos
-            } else {
-                chunks.add(text.substring(lastSplitPos, lastSplitPos + maxLength))
-                lastSplitPos += maxLength
-            }
-            i = lastSplitPos
-        }
-
-        return chunks
-    }
-
-    /**
-     * 检查指定位置是否为句子结尾标点
-     *
-     * @param text 文本内容
-     * @param index 待检查的字符位置
-     * @return 是否为句子结尾标点
-     */
-    private fun checkSentenceEnd(text: String, index: Int): Boolean {
-        if (index < 0) return false
-        val sentenceEnds = listOf("。", "！", "？", ".", "!", "?")
-        for (ender in sentenceEnds) {
-            if (text.regionMatches(index, ender, 0, ender.length)) {
-                return true
-            }
-        }
-        return false
-    }
-
-    /**
-     * 检查指定位置是否为句中停顿标点
-     *
-     * @param text 文本内容
-     * @param index 待检查的字符位置
-     * @return 是否为句中停顿标点
-     */
-    private fun checkMidPause(text: String, index: Int): Boolean {
-        if (index < 0) return false
-        val midPauses = listOf("，", "、", ",", ";", "；", "：", ":")
-        for (pause in midPauses) {
-            if (text.regionMatches(index, pause, 0, pause.length)) {
-                return true
-            }
-        }
-        return false
-    }
-
-    /**
-     * 在最大长度范围内寻找最佳分割位置
-     *
-     * 向后搜索，优先在停顿标点处分割，其次在空白字符处分割。
-     * 无法找到合适位置时返回最大长度位置
-     *
-     * @param text 文本内容
-     * @param startPos 搜索起始位置
-     * @param maxLength 最大片段长度
-     * @return 最佳分割位置的索引
-     */
-    private fun findBestSplitPos(text: String, startPos: Int, maxLength: Int): Int {
-        val searchEnd = minOf(startPos + maxLength, text.length)
-
-        for (i in searchEnd - 1 downTo startPos + 1) {
-            if (checkMidPause(text, i)) {
-                return i + 1
-            }
-        }
-
-        for (i in searchEnd - 1 downTo startPos + 1) {
-            val char = text[i]
-            if (char == ' ' || char == '\n' || char == '\t') {
-                return i + 1
-            }
-        }
-
-        return searchEnd
-    }
-
-    /**
      * 获取供应商支持的语言代码集合
      *
      * @return 支持的语言代码集合（zho, eng）
@@ -918,23 +772,6 @@ class MiniMaxProvider : AbstractTtsProvider() {
         }
         val realVoiceName = extractRealVoiceName(voiceId)
         return realVoiceName != null && voiceIds.contains(realVoiceName)
-    }
-
-    /**
-     * 从复合声音名称中提取真实音色 ID
-     *
-     * 声音名称格式为 "voiceName::langCode"，此函数提取 voiceName 部分
-     *
-     * @param androidVoiceName 格式为 "voiceName::langCode" 的完整声音名称
-     * @return 纯音色 ID，不含语言信息
-     */
-    private fun extractRealVoiceName(androidVoiceName: String?): String? {
-        if (androidVoiceName == null) return null
-        return if (androidVoiceName.contains(VOICE_NAME_SEPARATOR)) {
-            androidVoiceName.substringBefore(VOICE_NAME_SEPARATOR)
-        } else {
-            androidVoiceName
-        }
     }
 
     /**

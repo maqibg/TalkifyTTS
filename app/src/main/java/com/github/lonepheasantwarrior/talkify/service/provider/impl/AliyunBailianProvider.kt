@@ -19,6 +19,7 @@ import com.github.lonepheasantwarrior.talkify.service.TtsLogger
 import com.github.lonepheasantwarrior.talkify.service.provider.AbstractTtsProvider
 import com.github.lonepheasantwarrior.talkify.service.provider.AudioConfig
 import com.github.lonepheasantwarrior.talkify.service.provider.SynthesisParams
+import com.github.lonepheasantwarrior.talkify.service.provider.TextChunkSplitter
 import com.github.lonepheasantwarrior.talkify.service.provider.TtsSynthesisListener
 import io.reactivex.Flowable
 import io.reactivex.disposables.Disposable
@@ -83,7 +84,7 @@ class AliyunBailianProvider : AbstractTtsProvider() {
 
         val qwenConfig = config as? AliyunBailianConfig
         if (qwenConfig == null) {
-            logError("Invalid config type, expected Qwen3TtsConfig")
+            logError("Invalid config type, expected AliyunBailianConfig")
             listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_PROVIDER_NOT_CONFIGURED))
             return
         }
@@ -94,7 +95,7 @@ class AliyunBailianProvider : AbstractTtsProvider() {
             return
         }
 
-        val textChunks = splitTextIntoChunks(text)
+        val textChunks = TextChunkSplitter.split(text, MAX_TEXT_LENGTH)
         if (textChunks.isEmpty()) {
             logWarning("待朗读文本内容为空")
             listener.onSynthesisCompleted()
@@ -294,90 +295,6 @@ class AliyunBailianProvider : AbstractTtsProvider() {
         return data
     }
 
-    private fun splitTextIntoChunks(text: String): List<String> {
-        if (text.isEmpty()) return emptyList()
-        if (text.length <= MAX_TEXT_LENGTH) return listOf(text)
-
-        val chunks = mutableListOf<String>()
-        var lastSplitPos = 0
-
-        var i = 0
-        while (i < text.length) {
-            val remainingLength = text.length - lastSplitPos
-
-            if (remainingLength <= MAX_TEXT_LENGTH) {
-                chunks.add(text.substring(lastSplitPos))
-                break
-            }
-
-            val isSentenceEnd = checkSentenceEnd(text, i)
-            val isMidPause = checkMidPause(text, i)
-
-            if (isSentenceEnd || isMidPause) {
-                val chunkLength = i - lastSplitPos + 1
-                if (chunkLength <= MAX_TEXT_LENGTH) {
-                    chunks.add(text.substring(lastSplitPos, i + 1))
-                    lastSplitPos = i + 1
-                    i++
-                    continue
-                }
-            }
-
-            val splitPos = findBestSplitPos(text, lastSplitPos)
-            if (splitPos > lastSplitPos) {
-                chunks.add(text.substring(lastSplitPos, splitPos))
-                lastSplitPos = splitPos
-            } else {
-                chunks.add(text.substring(lastSplitPos, lastSplitPos + MAX_TEXT_LENGTH))
-                lastSplitPos += MAX_TEXT_LENGTH
-            }
-            i = lastSplitPos
-        }
-
-        return chunks
-    }
-
-    private fun checkSentenceEnd(text: String, index: Int): Boolean {
-        if (index < 0) return false
-        val sentenceEnds = listOf("。", "！", "？", ".", "!", "?")
-        for (ender in sentenceEnds) {
-            if (text.regionMatches(index, ender, 0, ender.length)) {
-                return true
-            }
-        }
-        return false
-    }
-
-    private fun checkMidPause(text: String, index: Int): Boolean {
-        if (index < 0) return false
-        val midPauses = listOf("，", "、", ",", ";", "；", "：", ":")
-        for (pause in midPauses) {
-            if (text.regionMatches(index, pause, 0, pause.length)) {
-                return true
-            }
-        }
-        return false
-    }
-
-    private fun findBestSplitPos(text: String, startPos: Int): Int {
-        val searchEnd = minOf(startPos + MAX_TEXT_LENGTH, text.length)
-
-        for (i in searchEnd - 1 downTo startPos + 1) {
-            if (checkMidPause(text, i)) {
-                return i + 1
-            }
-        }
-
-        for (i in searchEnd - 1 downTo startPos + 1) {
-            val char = text[i]
-            if (char == ' ' || char == '\n' || char == '\t') {
-                return i + 1
-            }
-        }
-
-        return searchEnd
-    }
-
     private fun buildConversationParam(
         text: String, params: SynthesisParams, config: AliyunBailianConfig
     ): MultiModalConversationParam {
@@ -432,11 +349,6 @@ class AliyunBailianProvider : AbstractTtsProvider() {
                 AudioParameters.Voice.CHERRY
             }
         }
-    }
-
-    @Suppress("UNUSED_PARAMETER")
-    private fun isSynthesIsFinished(result: MultiModalConversationResult): Boolean {
-        return false
     }
 
     private fun extractAudioData(result: MultiModalConversationResult): ByteArray? {
@@ -496,15 +408,6 @@ class AliyunBailianProvider : AbstractTtsProvider() {
             return false
         }
         return AudioParameters.Voice.entries.any { it.value == extractRealVoiceName(voiceId) }
-    }
-
-    private fun extractRealVoiceName(androidVoiceName: String?): String? {
-        if (androidVoiceName == null) return null
-        return if (androidVoiceName.contains(VOICE_NAME_SEPARATOR)) {
-            androidVoiceName.substringBefore(VOICE_NAME_SEPARATOR)
-        } else {
-            androidVoiceName
-        }
     }
 
     override fun stop() {
