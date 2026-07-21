@@ -43,6 +43,9 @@
     <string name="tencent_secret_key_label">Secret Key</string>
     <string name="voice_select_placeholder">请选择声音</string>
     <string name="save_config">保存配置</string>
+    <string name="advanced_settings">高级设置</string>
+    <string name="expand">展开</string>
+    <string name="collapse">折叠</string>
     <string name="save_success">配置保存成功</string>
     <string name="save_failed">配置保存失败</string>
     <string name="config_not_saved">配置尚未保存，是否放弃？</string>
