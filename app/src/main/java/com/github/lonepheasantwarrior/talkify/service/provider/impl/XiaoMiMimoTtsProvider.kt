@@ -6,7 +6,7 @@ import com.github.lonepheasantwarrior.talkify.R
 import com.github.lonepheasantwarrior.talkify.TalkifyAppHolder
 import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlParser
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
-import com.github.lonepheasantwarrior.talkify.domain.model.XiaoMiMimoConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.XiaomiConfig
 import com.github.lonepheasantwarrior.talkify.service.TtsErrorCode
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
 import com.github.lonepheasantwarrior.talkify.service.provider.AbstractTtsProvider
@@ -132,7 +132,7 @@ class XiaoMiMimoTtsProvider : AbstractTtsProvider() {
     ) {
         checkNotReleased()
 
-        val mimoConfig = config as? XiaoMiMimoConfig
+        val mimoConfig = config as? XiaomiConfig
         if (mimoConfig == null) {
             logError("Invalid config type, expected XiaoMiMimoConfig")
             listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_PROVIDER_NOT_CONFIGURED))
@@ -184,7 +184,7 @@ class XiaoMiMimoTtsProvider : AbstractTtsProvider() {
      */
     private suspend fun processChunksSequentially(
         chunks: List<String>,
-        config: XiaoMiMimoConfig,
+        config: XiaomiConfig,
         params: SynthesisParams,
         listener: TtsSynthesisListener
     ) {
@@ -221,7 +221,7 @@ class XiaoMiMimoTtsProvider : AbstractTtsProvider() {
         text: String,
         chunkIndex: Int,
         totalChunks: Int,
-        config: XiaoMiMimoConfig,
+        config: XiaomiConfig,
         params: SynthesisParams,
         listener: TtsSynthesisListener
     ): Boolean = withContext(Dispatchers.IO) {
@@ -420,7 +420,7 @@ class XiaoMiMimoTtsProvider : AbstractTtsProvider() {
      */
     private fun buildHttpRequest(
         text: String,
-        config: XiaoMiMimoConfig,
+        config: XiaomiConfig,
         params: SynthesisParams
     ): Request {
         val voiceId = if (config.voiceId.isNotEmpty()) {
@@ -681,7 +681,7 @@ class XiaoMiMimoTtsProvider : AbstractTtsProvider() {
     }
 
     override fun isConfigured(config: BaseProviderConfig?): Boolean {
-        val mimoConfig = config as? XiaoMiMimoConfig
+        val mimoConfig = config as? XiaomiConfig
         var result = false
         if (mimoConfig != null) {
             result = mimoConfig.apiKey.isNotBlank()
@@ -691,7 +691,7 @@ class XiaoMiMimoTtsProvider : AbstractTtsProvider() {
     }
 
     override fun createDefaultConfig(): BaseProviderConfig {
-        return XiaoMiMimoConfig()
+        return XiaomiConfig()
     }
 
     override fun getConfigLabel(configKey: String, context: android.content.Context): String? {

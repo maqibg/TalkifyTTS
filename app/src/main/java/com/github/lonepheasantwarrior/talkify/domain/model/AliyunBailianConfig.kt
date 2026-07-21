@@ -27,7 +27,7 @@ package com.github.lonepheasantwarrior.talkify.domain.model
  * @property apiKey 阿里云百炼平台的 API Key
  *                  从阿里云控制台获取，需具有百炼服务访问权限
  */
-data class Qwen3TtsConfig(
+data class AliyunBailianConfig(
     override val voiceId: String = "",
     override val apiUrl: String = "",
     override val modelId: String = "",

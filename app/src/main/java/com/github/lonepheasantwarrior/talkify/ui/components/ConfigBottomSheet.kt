@@ -25,13 +25,13 @@ import androidx.compose.ui.unit.dp
 import com.github.lonepheasantwarrior.talkify.R
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.ConfigItem
-import com.github.lonepheasantwarrior.talkify.domain.model.MicrosoftTtsConfig
-import com.github.lonepheasantwarrior.talkify.domain.model.MiniMaxTtsConfig
-import com.github.lonepheasantwarrior.talkify.domain.model.Qwen3TtsConfig
-import com.github.lonepheasantwarrior.talkify.domain.model.SeedTts2Config
-import com.github.lonepheasantwarrior.talkify.domain.model.TencentTtsConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.AzureConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.MiniMaxConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.AliyunBailianConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.VolcengineConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.TencentCloudConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.TtsProvider
-import com.github.lonepheasantwarrior.talkify.domain.model.XiaoMiMimoConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.XiaomiConfig
 import com.github.lonepheasantwarrior.talkify.domain.repository.ProviderConfigRepository
 import com.github.lonepheasantwarrior.talkify.domain.repository.VoiceInfo
 import com.github.lonepheasantwarrior.talkify.domain.repository.VoiceRepository
@@ -93,28 +93,28 @@ fun ConfigBottomSheet(
 
     val configForEdit: BaseProviderConfig = remember(savedConfig, defaultConfig) {
         when (defaultConfig) {
-            is Qwen3TtsConfig -> {
-                val qwenSaved = savedConfig as? Qwen3TtsConfig
+            is AliyunBailianConfig -> {
+                val qwenSaved = savedConfig as? AliyunBailianConfig
                 qwenSaved ?: defaultConfig
             }
-            is SeedTts2Config -> {
-                val seedSaved = savedConfig as? SeedTts2Config
+            is VolcengineConfig -> {
+                val seedSaved = savedConfig as? VolcengineConfig
                 seedSaved ?: defaultConfig
             }
-            is TencentTtsConfig -> {
-                val tencentSaved = savedConfig as? TencentTtsConfig
+            is TencentCloudConfig -> {
+                val tencentSaved = savedConfig as? TencentCloudConfig
                 tencentSaved ?: defaultConfig
             }
-            is MicrosoftTtsConfig -> {
-                val msSaved = savedConfig as? MicrosoftTtsConfig
+            is AzureConfig -> {
+                val msSaved = savedConfig as? AzureConfig
                 msSaved ?: defaultConfig
             }
-            is XiaoMiMimoConfig -> {
-                val mmSaved = savedConfig as? XiaoMiMimoConfig
+            is XiaomiConfig -> {
+                val mmSaved = savedConfig as? XiaomiConfig
                 mmSaved ?: defaultConfig
             }
-            is MiniMaxTtsConfig -> {
-                val mmSaved = savedConfig as? MiniMaxTtsConfig
+            is MiniMaxConfig -> {
+                val mmSaved = savedConfig as? MiniMaxConfig
                 mmSaved ?: defaultConfig
             }
             else -> defaultConfig
@@ -257,7 +257,7 @@ private fun buildConfigItems(
     }
 
     when (config) {
-        is Qwen3TtsConfig -> {
+        is AliyunBailianConfig -> {
             val label = getLabel("api_key")
             if (label != null) {
                 items.add(
@@ -270,7 +270,7 @@ private fun buildConfigItems(
                 )
             }
         }
-        is SeedTts2Config -> {
+        is VolcengineConfig -> {
             val apiKeyLabel = getLabel("api_key")
             if (apiKeyLabel != null) {
                 items.add(
@@ -283,7 +283,7 @@ private fun buildConfigItems(
                 )
             }
         }
-        is TencentTtsConfig -> {
+        is TencentCloudConfig -> {
             val appIdLabel = getLabel("app_id")
             if (appIdLabel != null) {
                 items.add(
@@ -318,9 +318,9 @@ private fun buildConfigItems(
                 )
             }
         }
-        is MicrosoftTtsConfig -> {
+        is AzureConfig -> {
         }
-        is XiaoMiMimoConfig -> {
+        is XiaomiConfig -> {
             val label = getLabel("api_key")
             if (label != null) {
                 items.add(
@@ -333,7 +333,7 @@ private fun buildConfigItems(
                 )
             }
         }
-        is MiniMaxTtsConfig -> {
+        is MiniMaxConfig -> {
             val label = getLabel("api_key")
             if (label != null) {
                 items.add(
@@ -360,7 +360,7 @@ private fun buildConfigItems(
         )
     }
 
-    if (config is MiniMaxTtsConfig) {
+    if (config is MiniMaxConfig) {
         val synthConfigLabel = getLabel("continuous_sound")
         if (synthConfigLabel != null) {
             items.add(
@@ -389,29 +389,29 @@ private fun buildConfigFromItems(
     val modelId = items.find { it.key == "model_id" }?.value ?: ""
 
     return when (defaultConfig) {
-        is Qwen3TtsConfig -> {
+        is AliyunBailianConfig -> {
             val apiKey = items.find { it.key == "api_key" }?.value ?: ""
-            Qwen3TtsConfig(
+            AliyunBailianConfig(
                 apiKey = apiKey,
                 voiceId = voiceId,
                 apiUrl = apiUrl,
                 modelId = modelId
             )
         }
-        is SeedTts2Config -> {
+        is VolcengineConfig -> {
             val apiKey = items.find { it.key == "api_key" }?.value ?: ""
-            SeedTts2Config(
+            VolcengineConfig(
                 apiKey = apiKey,
                 voiceId = voiceId,
                 apiUrl = apiUrl,
                 modelId = modelId
             )
         }
-        is TencentTtsConfig -> {
+        is TencentCloudConfig -> {
             val appId = items.find { it.key == "app_id" }?.value ?: ""
             val secretId = items.find { it.key == "secret_id" }?.value ?: ""
             val secretKey = items.find { it.key == "secret_key" }?.value ?: ""
-            TencentTtsConfig(
+            TencentCloudConfig(
                 appId = appId,
                 secretId = secretId,
                 secretKey = secretKey,
@@ -420,25 +420,25 @@ private fun buildConfigFromItems(
                 modelId = modelId
             )
         }
-        is MicrosoftTtsConfig -> {
-            MicrosoftTtsConfig(
+        is AzureConfig -> {
+            AzureConfig(
                 voiceId = voiceId,
                 apiUrl = apiUrl
             )
         }
-        is XiaoMiMimoConfig -> {
+        is XiaomiConfig -> {
             val apiKey = items.find { it.key == "api_key" }?.value ?: ""
-            XiaoMiMimoConfig(
+            XiaomiConfig(
                 apiKey = apiKey,
                 voiceId = voiceId,
                 apiUrl = apiUrl,
                 modelId = modelId
             )
         }
-        is MiniMaxTtsConfig -> {
+        is MiniMaxConfig -> {
             val apiKey = items.find { it.key == "api_key" }?.value ?: ""
             val continuousSound = items.find { it.key == "continuous_sound" }?.value?.toBooleanStrictOrNull() ?: true
-            MiniMaxTtsConfig(
+            MiniMaxConfig(
                 apiKey = apiKey,
                 voiceId = voiceId,
                 apiUrl = apiUrl,

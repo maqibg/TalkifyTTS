@@ -12,7 +12,7 @@ import com.alibaba.dashscope.exception.UploadFileException
 import com.alibaba.dashscope.utils.Constants
 import com.github.lonepheasantwarrior.talkify.R
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
-import com.github.lonepheasantwarrior.talkify.domain.model.Qwen3TtsConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.AliyunBailianConfig
 import com.github.lonepheasantwarrior.talkify.service.TtsErrorCode
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
 import com.github.lonepheasantwarrior.talkify.service.provider.AbstractTtsProvider
@@ -84,7 +84,7 @@ class Qwen3TtsProvider : AbstractTtsProvider() {
     ) {
         checkNotReleased()
 
-        val qwenConfig = config as? Qwen3TtsConfig
+        val qwenConfig = config as? AliyunBailianConfig
         if (qwenConfig == null) {
             logError("Invalid config type, expected Qwen3TtsConfig")
             listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_PROVIDER_NOT_CONFIGURED))
@@ -117,7 +117,7 @@ class Qwen3TtsProvider : AbstractTtsProvider() {
         chunks: List<String>,
         index: Int,
         params: SynthesisParams,
-        config: Qwen3TtsConfig,
+        config: AliyunBailianConfig,
         listener: TtsSynthesisListener
     ) {
         if (isCancelled || hasCompleted) {
@@ -214,7 +214,7 @@ class Qwen3TtsProvider : AbstractTtsProvider() {
         chunks: List<String>,
         index: Int,
         params: SynthesisParams,
-        config: Qwen3TtsConfig,
+        config: AliyunBailianConfig,
         listener: TtsSynthesisListener
     ): DisposableSubscriber<MultiModalConversationResult> {
         return object : DisposableSubscriber<MultiModalConversationResult>() {
@@ -382,7 +382,7 @@ class Qwen3TtsProvider : AbstractTtsProvider() {
     }
 
     private fun buildConversationParam(
-        text: String, params: SynthesisParams, config: Qwen3TtsConfig
+        text: String, params: SynthesisParams, config: AliyunBailianConfig
     ): MultiModalConversationParam {
         val voice = if (config.voiceId.isNotEmpty()) {
             parseVoice(config.voiceId)
@@ -526,7 +526,7 @@ class Qwen3TtsProvider : AbstractTtsProvider() {
     }
 
     override fun isConfigured(config: BaseProviderConfig?): Boolean {
-        val qwenConfig = config as? Qwen3TtsConfig
+        val qwenConfig = config as? AliyunBailianConfig
         var result = false
         if (qwenConfig != null) {
             result = qwenConfig.apiKey.isNotBlank()
@@ -536,7 +536,7 @@ class Qwen3TtsProvider : AbstractTtsProvider() {
     }
 
     override fun createDefaultConfig(): BaseProviderConfig {
-        return Qwen3TtsConfig()
+        return AliyunBailianConfig()
     }
 
     override fun getConfigLabel(configKey: String, context: android.content.Context): String? {

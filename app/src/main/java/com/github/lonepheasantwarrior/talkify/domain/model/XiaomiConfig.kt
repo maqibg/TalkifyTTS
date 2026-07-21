@@ -13,7 +13,7 @@ package com.github.lonepheasantwarrior.talkify.domain.model
  * @property apiKey 小米平台的 API Key，用于认证
  *                  从小米开放平台获取
  */
-data class XiaoMiMimoConfig(
+data class XiaomiConfig(
     override val voiceId: String = "",
     override val apiUrl: String = "",
     override val modelId: String = "",

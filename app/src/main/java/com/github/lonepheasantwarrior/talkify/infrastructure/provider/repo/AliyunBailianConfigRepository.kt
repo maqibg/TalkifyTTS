@@ -3,7 +3,7 @@ package com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo
 import android.content.Context
 import android.content.SharedPreferences
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
-import com.github.lonepheasantwarrior.talkify.domain.model.Qwen3TtsConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.AliyunBailianConfig
 import com.github.lonepheasantwarrior.talkify.domain.repository.ProviderConfigRepository
 import com.github.lonepheasantwarrior.talkify.infrastructure.app.repo.SharedPreferencesAppConfigRepository
 
@@ -24,7 +24,7 @@ class AliyunBailianConfigRepository(
 
     override fun getConfig(providerId: String): BaseProviderConfig {
         val prefsKey = getPrefsKey(providerId)
-        return Qwen3TtsConfig(
+        return AliyunBailianConfig(
             apiKey = sharedPreferences.getString("${prefsKey}_$KEY_API_KEY", "") ?: "",
             voiceId = sharedPreferences.getString("${prefsKey}_$KEY_VOICE_ID", "") ?: "",
             apiUrl = sharedPreferences.getString("${prefsKey}_$KEY_API_URL", "") ?: "",
@@ -34,7 +34,7 @@ class AliyunBailianConfigRepository(
 
     override fun saveConfig(providerId: String, config: BaseProviderConfig) {
         val prefsKey = getPrefsKey(providerId)
-        val qwenConfig = config as? Qwen3TtsConfig ?: return
+        val qwenConfig = config as? AliyunBailianConfig ?: return
         sharedPreferences.edit()
             .putString("${prefsKey}_$KEY_API_KEY", qwenConfig.apiKey)
             .putString("${prefsKey}_$KEY_VOICE_ID", qwenConfig.voiceId)

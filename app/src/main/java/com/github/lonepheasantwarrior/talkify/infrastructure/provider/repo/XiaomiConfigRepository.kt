@@ -3,7 +3,7 @@ package com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo
 import android.content.Context
 import android.content.SharedPreferences
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
-import com.github.lonepheasantwarrior.talkify.domain.model.XiaoMiMimoConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.XiaomiConfig
 import com.github.lonepheasantwarrior.talkify.domain.repository.ProviderConfigRepository
 
 /**
@@ -21,7 +21,7 @@ class XiaomiConfigRepository(
 
     override fun getConfig(providerId: String): BaseProviderConfig {
         val prefsKey = getPrefsKey(providerId)
-        return XiaoMiMimoConfig(
+        return XiaomiConfig(
             apiKey = sharedPreferences.getString("${prefsKey}_$KEY_API_KEY", "") ?: "",
             voiceId = sharedPreferences.getString("${prefsKey}_$KEY_VOICE_ID", "") ?: "",
             apiUrl = sharedPreferences.getString("${prefsKey}_$KEY_API_URL", "") ?: "",
@@ -31,7 +31,7 @@ class XiaomiConfigRepository(
 
     override fun saveConfig(providerId: String, config: BaseProviderConfig) {
         val prefsKey = getPrefsKey(providerId)
-        val mimoConfig = config as? XiaoMiMimoConfig ?: return
+        val mimoConfig = config as? XiaomiConfig ?: return
         sharedPreferences.edit()
             .putString("${prefsKey}_$KEY_API_KEY", mimoConfig.apiKey)
             .putString("${prefsKey}_$KEY_VOICE_ID", mimoConfig.voiceId)

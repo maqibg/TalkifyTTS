@@ -63,13 +63,13 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.lonepheasantwarrior.talkify.R
-import com.github.lonepheasantwarrior.talkify.domain.model.MicrosoftTtsConfig
-import com.github.lonepheasantwarrior.talkify.domain.model.MiniMaxTtsConfig
-import com.github.lonepheasantwarrior.talkify.domain.model.Qwen3TtsConfig
-import com.github.lonepheasantwarrior.talkify.domain.model.SeedTts2Config
-import com.github.lonepheasantwarrior.talkify.domain.model.TencentTtsConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.AzureConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.MiniMaxConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.AliyunBailianConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.VolcengineConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.TencentCloudConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.TtsProviderRegistry
-import com.github.lonepheasantwarrior.talkify.domain.model.XiaoMiMimoConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.XiaomiConfig
 import com.github.lonepheasantwarrior.talkify.domain.repository.AppConfigRepository
 import com.github.lonepheasantwarrior.talkify.domain.repository.ProviderConfigRepository
 import com.github.lonepheasantwarrior.talkify.domain.repository.VoiceInfo
@@ -377,42 +377,42 @@ fun MainScreen(
                                 }
 
                                 val config = when (savedConfig) {
-                                    is Qwen3TtsConfig -> {
-                                        val qwenConfig = savedConfig as? Qwen3TtsConfig ?: Qwen3TtsConfig()
+                                    is AliyunBailianConfig -> {
+                                        val qwenConfig = savedConfig as? AliyunBailianConfig ?: AliyunBailianConfig()
                                         qwenConfig.copy(voiceId = selectedVoice?.voiceId ?: qwenConfig.voiceId)
                                     }
-                                    is SeedTts2Config -> {
-                                        val seedConfig = savedConfig as? SeedTts2Config ?: SeedTts2Config()
+                                    is VolcengineConfig -> {
+                                        val seedConfig = savedConfig as? VolcengineConfig ?: VolcengineConfig()
                                         seedConfig.copy(voiceId = selectedVoice?.voiceId ?: seedConfig.voiceId)
                                     }
-                                    is TencentTtsConfig -> {
-                                        val tencentConfig = savedConfig as? TencentTtsConfig ?: TencentTtsConfig()
+                                    is TencentCloudConfig -> {
+                                        val tencentConfig = savedConfig as? TencentCloudConfig ?: TencentCloudConfig()
                                         tencentConfig.copy(voiceId = selectedVoice?.voiceId ?: tencentConfig.voiceId)
                                     }
-                                    is MicrosoftTtsConfig -> {
-                                        val msConfig = savedConfig as? MicrosoftTtsConfig ?: MicrosoftTtsConfig()
+                                    is AzureConfig -> {
+                                        val msConfig = savedConfig as? AzureConfig ?: AzureConfig()
                                         msConfig.copy(voiceId = selectedVoice?.voiceId ?: msConfig.voiceId)
                                     }
-                                    is XiaoMiMimoConfig -> {
-                                        val xmConfig = savedConfig as? XiaoMiMimoConfig ?: XiaoMiMimoConfig()
+                                    is XiaomiConfig -> {
+                                        val xmConfig = savedConfig as? XiaomiConfig ?: XiaomiConfig()
                                         xmConfig.copy(voiceId = selectedVoice?.voiceId ?: xmConfig.voiceId)
                                     }
-                                    is MiniMaxTtsConfig -> {
-                                        val mmConfig = savedConfig as? MiniMaxTtsConfig ?: MiniMaxTtsConfig()
+                                    is MiniMaxConfig -> {
+                                        val mmConfig = savedConfig as? MiniMaxConfig ?: MiniMaxConfig()
                                         mmConfig.copy(voiceId = selectedVoice?.voiceId ?: mmConfig.voiceId)
                                     }
                                     else -> savedConfig
                                 }
 
                                 val isConfigured = when (config) {
-                                    is Qwen3TtsConfig -> config.apiKey.isNotBlank()
-                                    is SeedTts2Config -> config.apiKey.isNotBlank()
-                                    is TencentTtsConfig -> config.appId.isNotBlank() && 
+                                    is AliyunBailianConfig -> config.apiKey.isNotBlank()
+                                    is VolcengineConfig -> config.apiKey.isNotBlank()
+                                    is TencentCloudConfig -> config.appId.isNotBlank() &&
                                             config.secretId.isNotBlank() && 
                                             config.secretKey.isNotBlank()
-                                    is MicrosoftTtsConfig -> true
-                                    is XiaoMiMimoConfig -> config.apiKey.isNotBlank()
-                                    is MiniMaxTtsConfig -> config.apiKey.isNotBlank()
+                                    is AzureConfig -> true
+                                    is XiaomiConfig -> config.apiKey.isNotBlank()
+                                    is MiniMaxConfig -> config.apiKey.isNotBlank()
                                     else -> false
                                 }
 

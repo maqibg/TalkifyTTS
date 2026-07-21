@@ -5,7 +5,7 @@ import com.github.lonepheasantwarrior.talkify.R
 import com.github.lonepheasantwarrior.talkify.TalkifyAppHolder
 import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlParser
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
-import com.github.lonepheasantwarrior.talkify.domain.model.TencentTtsConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.TencentCloudConfig
 import com.github.lonepheasantwarrior.talkify.service.TtsErrorCode
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
 import com.github.lonepheasantwarrior.talkify.service.provider.AbstractTtsProvider
@@ -165,7 +165,7 @@ class TencentTtsProvider : AbstractTtsProvider() {
     ) {
         checkNotReleased()
 
-        val tencentConfig = config as? TencentTtsConfig
+        val tencentConfig = config as? TencentCloudConfig
         if (tencentConfig == null) {
             logError("Invalid config type, expected TencentTtsConfig")
             listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_PROVIDER_NOT_CONFIGURED))
@@ -216,7 +216,7 @@ class TencentTtsProvider : AbstractTtsProvider() {
 
     private suspend fun processChunksSequentially(
         chunks: List<String>,
-        config: TencentTtsConfig,
+        config: TencentCloudConfig,
         params: SynthesisParams,
         voiceId: String,
         sampleRate: Int,
@@ -248,7 +248,7 @@ class TencentTtsProvider : AbstractTtsProvider() {
 
     private suspend fun processSingleChunk(
         text: String,
-        config: TencentTtsConfig,
+        config: TencentCloudConfig,
         params: SynthesisParams,
         voiceId: String,
         sampleRate: Int,
@@ -547,7 +547,7 @@ class TencentTtsProvider : AbstractTtsProvider() {
     }
 
     override fun isConfigured(config: BaseProviderConfig?): Boolean {
-        val tencentConfig = config as? TencentTtsConfig
+        val tencentConfig = config as? TencentCloudConfig
         var result = false
         if (tencentConfig != null) {
             result = tencentConfig.appId.isNotBlank() &&
@@ -559,7 +559,7 @@ class TencentTtsProvider : AbstractTtsProvider() {
     }
 
     override fun createDefaultConfig(): BaseProviderConfig {
-        return TencentTtsConfig()
+        return TencentCloudConfig()
     }
 
     override fun getConfigLabel(configKey: String, context: android.content.Context): String? {

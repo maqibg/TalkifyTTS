@@ -1,7 +1,6 @@
 package com.github.lonepheasantwarrior.talkify.ui.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -9,6 +8,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.LinkInteractionListener
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -41,34 +43,35 @@ fun MarkdownText(
     val linkColor = MaterialTheme.colorScheme.primary
     val uriHandler = LocalUriHandler.current
 
+    val linkInteractionListener = remember(uriHandler) {
+        LinkInteractionListener { annotation ->
+            val url = (annotation as LinkAnnotation.Clickable).tag
+            try {
+                uriHandler.openUri(url)
+            } catch (e: Exception) {
+                // 防止非标准 URI 导致崩溃
+                e.printStackTrace()
+            }
+        }
+    }
+
     if (isMarkdown) {
-        val parsedText = remember(content, style, color, linkColor) {
+        val parsedText = remember(content, style, color, linkColor, codeBackgroundColor, codeTextColor, linkInteractionListener) {
             parseMarkdown(
                 content = content,
                 baseStyle = style.copy(color = color),
                 baseColor = color,
                 codeBackgroundColor = codeBackgroundColor,
                 codeTextColor = codeTextColor,
-                linkColor = linkColor
+                linkColor = linkColor,
+                linkInteractionListener = linkInteractionListener
             )
         }
 
-        // 使用 ClickableText 响应用户点击事件
-        ClickableText(
+        Text(
             text = parsedText,
             modifier = modifier.fillMaxWidth(),
-            style = style.copy(color = color),
-            onClick = { offset ->
-                parsedText.getStringAnnotations(tag = "URL", start = offset, end = offset)
-                    .firstOrNull()?.let { annotation ->
-                        try {
-                            uriHandler.openUri(annotation.item)
-                        } catch (e: Exception) {
-                            // 防止非标准 URI 导致崩溃
-                            e.printStackTrace()
-                        }
-                    }
-            }
+            style = style.copy(color = color)
         )
     } else {
         Text(
@@ -85,7 +88,8 @@ private fun parseMarkdown(
     baseColor: Color,
     codeBackgroundColor: Color,
     codeTextColor: Color,
-    linkColor: Color
+    linkColor: Color,
+    linkInteractionListener: LinkInteractionListener
 ): androidx.compose.ui.text.AnnotatedString {
     val boldStyle = SpanStyle(fontWeight = FontWeight.Bold, color = baseColor)
     val italicStyle = SpanStyle(fontStyle = FontStyle.Italic, color = baseColor)
@@ -126,25 +130,25 @@ private fun parseMarkdown(
                 line.startsWith("- ") || line.startsWith("* ") -> {
                     append("• ")
                     pushStyle(baseStyle.toSpanStyle())
-                    append(processInlineFormatting(line.substring(2), boldStyle, italicStyle, codeStyle, linkStyle))
+                    append(processInlineFormatting(line.substring(2), boldStyle, italicStyle, codeStyle, linkStyle, linkInteractionListener))
                     pop()
                 }
                 line.startsWith("> ") -> {
                     pushStyle(baseStyle.copy(color = baseColor.copy(alpha = 0.7f)).toSpanStyle())
                     append("│ ")
-                    append(processInlineFormatting(line.removePrefix("> "), boldStyle, italicStyle, codeStyle, linkStyle))
+                    append(processInlineFormatting(line.removePrefix("> "), boldStyle, italicStyle, codeStyle, linkStyle, linkInteractionListener))
                     pop()
                 }
                 line.matches(Regex("^\\d+\\. .*")) -> {
                     val number = line.substringBefore(". ")
                     append("$number. ")
                     pushStyle(baseStyle.toSpanStyle())
-                    append(processInlineFormatting(line.substringAfter(". "), boldStyle, italicStyle, codeStyle, linkStyle))
+                    append(processInlineFormatting(line.substringAfter(". "), boldStyle, italicStyle, codeStyle, linkStyle, linkInteractionListener))
                     pop()
                 }
                 else -> {
                     pushStyle(baseStyle.toSpanStyle())
-                    append(processInlineFormatting(line, boldStyle, italicStyle, codeStyle, linkStyle))
+                    append(processInlineFormatting(line, boldStyle, italicStyle, codeStyle, linkStyle, linkInteractionListener))
                     pop()
                 }
             }
@@ -161,11 +165,12 @@ private fun processInlineFormatting(
     boldStyle: SpanStyle,
     italicStyle: SpanStyle,
     codeStyle: SpanStyle,
-    linkStyle: SpanStyle
+    linkStyle: SpanStyle,
+    linkInteractionListener: LinkInteractionListener
 ): androidx.compose.ui.text.AnnotatedString {
     return buildAnnotatedString {
         // 使用 Regex 统一捕获加粗、斜体、代码块和链接，大幅简化原本复杂的嵌套判断逻辑
-        val inlineRegex = Regex("""(\*\*.*?\*\*|\*.*?\*|`.*?`|\[.*?\]\([^)]+\))""")
+        val inlineRegex = Regex("""(\*\*.*?\*\*|\*.*?\*|`.*?`|\[.*?]\([^)]+\))""")
         var lastIndex = 0
         val results = inlineRegex.findAll(text)
 
@@ -194,10 +199,9 @@ private fun processInlineFormatting(
                         val linkText = matchText.substring(1, bracketEnd)
                         val linkUrl = matchText.substring(parenStart + 1, parenEnd)
 
-                        // 注入 URL 标记，供 onClick 时捕获
-                        pushStringAnnotation(tag = "URL", annotation = linkUrl)
-                        withStyle(linkStyle) { append(linkText) }
-                        pop()
+                        withLink(LinkAnnotation.Clickable(tag = linkUrl, linkInteractionListener = linkInteractionListener)) {
+                            withStyle(linkStyle) { append(linkText) }
+                        }
                     } else {
                         append(matchText)
                     }

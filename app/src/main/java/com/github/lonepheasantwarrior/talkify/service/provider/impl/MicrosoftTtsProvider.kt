@@ -4,7 +4,7 @@ import android.content.Context
 import android.speech.tts.Voice
 import com.github.lonepheasantwarrior.talkify.R
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
-import com.github.lonepheasantwarrior.talkify.domain.model.MicrosoftTtsConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.AzureConfig
 import com.github.lonepheasantwarrior.talkify.service.TtsErrorCode
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
 import com.github.lonepheasantwarrior.talkify.service.provider.AbstractTtsProvider
@@ -288,7 +288,7 @@ class MicrosoftTtsProvider : AbstractTtsProvider() {
     ) {
         checkNotReleased()
 
-        val msConfig = config as? MicrosoftTtsConfig
+        val msConfig = config as? AzureConfig
         if (msConfig == null) {
             logError("Invalid config type, expected MicrosoftTtsConfig")
             listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_PROVIDER_NOT_CONFIGURED))
@@ -349,7 +349,7 @@ class MicrosoftTtsProvider : AbstractTtsProvider() {
     private suspend fun processChunks(
         chunks: List<String>,
         params: SynthesisParams,
-        config: MicrosoftTtsConfig,
+        config: AzureConfig,
         listener: TtsSynthesisListener
     ) {
         val pipeClosed = AtomicBoolean(false)
@@ -967,13 +967,13 @@ class MicrosoftTtsProvider : AbstractTtsProvider() {
     }
 
     override fun isConfigured(config: BaseProviderConfig?): Boolean {
-        val result = config is MicrosoftTtsConfig
+        val result = config is AzureConfig
         TtsLogger.d("$tag: isConfigured = $result")
         return result
     }
 
     override fun createDefaultConfig(): BaseProviderConfig {
-        return MicrosoftTtsConfig()
+        return AzureConfig()
     }
 
     override fun getConfigLabel(configKey: String, context: Context): String? {

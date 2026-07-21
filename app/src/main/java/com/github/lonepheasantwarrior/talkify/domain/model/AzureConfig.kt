@@ -20,7 +20,7 @@ package com.github.lonepheasantwarrior.talkify.domain.model
  * @property apiUrl 自定义 WebSocket API 地址，为空时使用默认地址
  *                   （默认：wss://speech.platform.bing.com/...）
  */
-data class MicrosoftTtsConfig(
+data class AzureConfig(
     override val voiceId: String = "",
     override val apiUrl: String = ""
 ) : BaseProviderConfig(voiceId, apiUrl, "")

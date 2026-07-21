@@ -13,7 +13,7 @@ package com.github.lonepheasantwarrior.talkify.domain.model
  * @property apiKey MiniMax 平台的 API Key，用于认证
  *                  从 MiniMax 开放平台获取
  */
-data class MiniMaxTtsConfig(
+data class MiniMaxConfig(
     override val voiceId: String = "",
     override val apiUrl: String = "",
     override val modelId: String = "",

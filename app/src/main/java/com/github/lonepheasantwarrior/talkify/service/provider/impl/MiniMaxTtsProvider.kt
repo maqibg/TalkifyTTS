@@ -5,7 +5,7 @@ import com.github.lonepheasantwarrior.talkify.R
 import com.github.lonepheasantwarrior.talkify.TalkifyAppHolder
 import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlParser
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
-import com.github.lonepheasantwarrior.talkify.domain.model.MiniMaxTtsConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.MiniMaxConfig
 import com.github.lonepheasantwarrior.talkify.service.TtsErrorCode
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
 import com.github.lonepheasantwarrior.talkify.service.provider.AbstractTtsProvider
@@ -128,7 +128,7 @@ class MiniMaxTtsProvider : AbstractTtsProvider() {
     ) {
         checkNotReleased()
 
-        val miniMaxConfig = config as? MiniMaxTtsConfig
+        val miniMaxConfig = config as? MiniMaxConfig
         if (miniMaxConfig == null) {
             logError("Invalid config type, expected MiniMaxTtsConfig")
             listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_PROVIDER_NOT_CONFIGURED))
@@ -182,7 +182,7 @@ class MiniMaxTtsProvider : AbstractTtsProvider() {
      */
     private suspend fun performWebSocketSynthesis(
         text: String,
-        config: MiniMaxTtsConfig,
+        config: MiniMaxConfig,
         params: SynthesisParams,
         listener: TtsSynthesisListener
     ) {
@@ -277,7 +277,7 @@ class MiniMaxTtsProvider : AbstractTtsProvider() {
         private val taskStartedDeferred: CompletableDeferred<Unit>,
         private val taskFinishedDeferred: CompletableDeferred<Unit>,
         private val errorDeferred: CompletableDeferred<String>,
-        private val config: MiniMaxTtsConfig,
+        private val config: MiniMaxConfig,
         private val params: SynthesisParams
     ) : WebSocketListener() {
 
@@ -948,7 +948,7 @@ class MiniMaxTtsProvider : AbstractTtsProvider() {
      * @return true 表示已配置
      */
     override fun isConfigured(config: BaseProviderConfig?): Boolean {
-        val miniMaxConfig = config as? MiniMaxTtsConfig
+        val miniMaxConfig = config as? MiniMaxConfig
         var result = false
         if (miniMaxConfig != null) {
             result = miniMaxConfig.apiKey.isNotBlank()
@@ -960,10 +960,10 @@ class MiniMaxTtsProvider : AbstractTtsProvider() {
     /**
      * 创建默认供应商配置
      *
-     * @return 默认的 [MiniMaxTtsConfig] 实例
+     * @return 默认的 [MiniMaxConfig] 实例
      */
     override fun createDefaultConfig(): BaseProviderConfig {
-        return MiniMaxTtsConfig()
+        return MiniMaxConfig()
     }
 
     /**

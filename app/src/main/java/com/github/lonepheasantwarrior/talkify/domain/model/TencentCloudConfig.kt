@@ -34,7 +34,7 @@ package com.github.lonepheasantwarrior.talkify.domain.model
  * @property secretKey 腾讯云 API 的 SecretKey
  *                     从腾讯云 API 密钥管理控制台获取
  */
-data class TencentTtsConfig(
+data class TencentCloudConfig(
     override val voiceId: String = "",
     override val apiUrl: String = "",
     override val modelId: String = "",

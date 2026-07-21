@@ -6,7 +6,7 @@ import com.github.lonepheasantwarrior.talkify.R
 import com.github.lonepheasantwarrior.talkify.TalkifyAppHolder
 import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlParser
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
-import com.github.lonepheasantwarrior.talkify.domain.model.SeedTts2Config
+import com.github.lonepheasantwarrior.talkify.domain.model.VolcengineConfig
 import com.github.lonepheasantwarrior.talkify.service.TtsErrorCode
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
 import com.github.lonepheasantwarrior.talkify.service.provider.AbstractTtsProvider
@@ -132,7 +132,7 @@ class SeedTts2Provider : AbstractTtsProvider() {
     ) {
         checkNotReleased()
 
-        val seedConfig = config as? SeedTts2Config
+        val seedConfig = config as? VolcengineConfig
         if (seedConfig == null) {
             logError("Invalid config type, expected SeedTts2Config")
             listener.onError(TtsErrorCode.getErrorMessage(TtsErrorCode.ERROR_PROVIDER_NOT_CONFIGURED))
@@ -184,7 +184,7 @@ class SeedTts2Provider : AbstractTtsProvider() {
      */
     private suspend fun processChunksSequentially(
         chunks: List<String>,
-        config: SeedTts2Config,
+        config: VolcengineConfig,
         params: SynthesisParams,
         listener: TtsSynthesisListener
     ) {
@@ -221,7 +221,7 @@ class SeedTts2Provider : AbstractTtsProvider() {
         text: String,
         chunkIndex: Int,
         totalChunks: Int,
-        config: SeedTts2Config,
+        config: VolcengineConfig,
         params: SynthesisParams,
         listener: TtsSynthesisListener
     ): Boolean = withContext(Dispatchers.IO) {
@@ -388,7 +388,7 @@ class SeedTts2Provider : AbstractTtsProvider() {
      */
     private fun buildHttpRequest(
         text: String,
-        config: SeedTts2Config,
+        config: VolcengineConfig,
         params: SynthesisParams
     ): Request {
         val voiceId = if (config.voiceId.isNotEmpty()) {
@@ -715,7 +715,7 @@ class SeedTts2Provider : AbstractTtsProvider() {
     }
 
     override fun isConfigured(config: BaseProviderConfig?): Boolean {
-        val seedConfig = config as? SeedTts2Config
+        val seedConfig = config as? VolcengineConfig
         var result = false
         if (seedConfig != null) {
             result = seedConfig.apiKey.isNotBlank()
@@ -725,7 +725,7 @@ class SeedTts2Provider : AbstractTtsProvider() {
     }
 
     override fun createDefaultConfig(): BaseProviderConfig {
-        return SeedTts2Config()
+        return VolcengineConfig()
     }
 
     override fun getConfigLabel(configKey: String, context: android.content.Context): String? {

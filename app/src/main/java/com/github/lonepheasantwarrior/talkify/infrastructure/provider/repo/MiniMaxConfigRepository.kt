@@ -3,7 +3,7 @@ package com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo
 import android.content.Context
 import android.content.SharedPreferences
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
-import com.github.lonepheasantwarrior.talkify.domain.model.MiniMaxTtsConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.MiniMaxConfig
 import com.github.lonepheasantwarrior.talkify.domain.repository.ProviderConfigRepository
 import androidx.core.content.edit
 
@@ -22,7 +22,7 @@ class MiniMaxConfigRepository(
 
     override fun getConfig(providerId: String): BaseProviderConfig {
         val prefsKey = getPrefsKey(providerId)
-        return MiniMaxTtsConfig(
+        return MiniMaxConfig(
             apiKey = sharedPreferences.getString("${prefsKey}_$KEY_API_KEY", "") ?: "",
             voiceId = sharedPreferences.getString("${prefsKey}_$KEY_VOICE_ID", "") ?: "",
             apiUrl = sharedPreferences.getString("${prefsKey}_$KEY_API_URL", "") ?: "",
@@ -33,7 +33,7 @@ class MiniMaxConfigRepository(
 
     override fun saveConfig(providerId: String, config: BaseProviderConfig) {
         val prefsKey = getPrefsKey(providerId)
-        val miniMaxConfig = config as? MiniMaxTtsConfig ?: return
+        val miniMaxConfig = config as? MiniMaxConfig ?: return
         sharedPreferences.edit {
             putString("${prefsKey}_$KEY_API_KEY", miniMaxConfig.apiKey)
                 .putString("${prefsKey}_$KEY_VOICE_ID", miniMaxConfig.voiceId)

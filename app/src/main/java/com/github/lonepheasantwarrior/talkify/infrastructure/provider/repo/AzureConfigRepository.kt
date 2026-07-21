@@ -3,7 +3,7 @@ package com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo
 import android.content.Context
 import android.content.SharedPreferences
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
-import com.github.lonepheasantwarrior.talkify.domain.model.MicrosoftTtsConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.AzureConfig
 import com.github.lonepheasantwarrior.talkify.domain.repository.ProviderConfigRepository
 
 /**
@@ -23,7 +23,7 @@ class AzureConfigRepository(
 
     override fun getConfig(providerId: String): BaseProviderConfig {
         val prefsKey = getPrefsKey(providerId)
-        return MicrosoftTtsConfig(
+        return AzureConfig(
             voiceId = sharedPreferences.getString("${prefsKey}_$KEY_VOICE_ID", "") ?: "",
             apiUrl = sharedPreferences.getString("${prefsKey}_$KEY_API_URL", "") ?: ""
         )
@@ -31,7 +31,7 @@ class AzureConfigRepository(
 
     override fun saveConfig(providerId: String, config: BaseProviderConfig) {
         val prefsKey = getPrefsKey(providerId)
-        val msConfig = config as? MicrosoftTtsConfig ?: return
+        val msConfig = config as? AzureConfig ?: return
         sharedPreferences.edit()
             .putString("${prefsKey}_$KEY_VOICE_ID", msConfig.voiceId)
             .putString("${prefsKey}_$KEY_API_URL", msConfig.apiUrl)

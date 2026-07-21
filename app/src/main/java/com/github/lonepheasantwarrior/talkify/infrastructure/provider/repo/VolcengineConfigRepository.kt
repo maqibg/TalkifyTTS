@@ -3,7 +3,7 @@ package com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo
 import android.content.Context
 import android.content.SharedPreferences
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
-import com.github.lonepheasantwarrior.talkify.domain.model.SeedTts2Config
+import com.github.lonepheasantwarrior.talkify.domain.model.VolcengineConfig
 import com.github.lonepheasantwarrior.talkify.domain.repository.ProviderConfigRepository
 import com.github.lonepheasantwarrior.talkify.infrastructure.app.repo.SharedPreferencesAppConfigRepository
 
@@ -24,7 +24,7 @@ class VolcengineConfigRepository(
 
     override fun getConfig(providerId: String): BaseProviderConfig {
         val prefsKey = getPrefsKey(providerId)
-        return SeedTts2Config(
+        return VolcengineConfig(
             apiKey = sharedPreferences.getString("${prefsKey}_$KEY_API_KEY", "") ?: "",
             voiceId = sharedPreferences.getString("${prefsKey}_$KEY_VOICE_ID", "") ?: "",
             apiUrl = sharedPreferences.getString("${prefsKey}_$KEY_API_URL", "") ?: "",
@@ -34,7 +34,7 @@ class VolcengineConfigRepository(
 
     override fun saveConfig(providerId: String, config: BaseProviderConfig) {
         val prefsKey = getPrefsKey(providerId)
-        val seedConfig = config as? SeedTts2Config ?: return
+        val seedConfig = config as? VolcengineConfig ?: return
         sharedPreferences.edit()
             .putString("${prefsKey}_$KEY_API_KEY", seedConfig.apiKey)
             .putString("${prefsKey}_$KEY_VOICE_ID", seedConfig.voiceId)

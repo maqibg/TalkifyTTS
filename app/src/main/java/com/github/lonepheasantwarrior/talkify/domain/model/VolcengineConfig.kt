@@ -13,7 +13,7 @@ package com.github.lonepheasantwarrior.talkify.domain.model
  * @property apiKey 火山引擎平台的 API Key，用于认证
  *                  从火山引擎平台控制台获取
  */
-data class SeedTts2Config(
+data class VolcengineConfig(
     override val voiceId: String = "",
     override val apiUrl: String = "",
     override val modelId: String = "",

@@ -3,7 +3,7 @@ package com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo
 import android.content.Context
 import android.content.SharedPreferences
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
-import com.github.lonepheasantwarrior.talkify.domain.model.TencentTtsConfig
+import com.github.lonepheasantwarrior.talkify.domain.model.TencentCloudConfig
 import com.github.lonepheasantwarrior.talkify.domain.repository.ProviderConfigRepository
 import com.github.lonepheasantwarrior.talkify.infrastructure.app.repo.SharedPreferencesAppConfigRepository
 
@@ -24,7 +24,7 @@ class TencentCloudConfigRepository(
 
     override fun getConfig(providerId: String): BaseProviderConfig {
         val prefsKey = getPrefsKey(providerId)
-        return TencentTtsConfig(
+        return TencentCloudConfig(
             appId = sharedPreferences.getString("${prefsKey}_$KEY_APP_ID", "") ?: "",
             secretId = sharedPreferences.getString("${prefsKey}_$KEY_SECRET_ID", "") ?: "",
             secretKey = sharedPreferences.getString("${prefsKey}_$KEY_SECRET_KEY", "") ?: "",
@@ -36,7 +36,7 @@ class TencentCloudConfigRepository(
 
     override fun saveConfig(providerId: String, config: BaseProviderConfig) {
         val prefsKey = getPrefsKey(providerId)
-        val tencentConfig = config as? TencentTtsConfig ?: return
+        val tencentConfig = config as? TencentCloudConfig ?: return
         sharedPreferences.edit()
             .putString("${prefsKey}_$KEY_APP_ID", tencentConfig.appId)
             .putString("${prefsKey}_$KEY_SECRET_ID", tencentConfig.secretId)
