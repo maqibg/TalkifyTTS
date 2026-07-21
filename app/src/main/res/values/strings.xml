@@ -116,7 +116,7 @@
     <string name="update_check_failed_network">网络连接失败，请检查网络设置</string>
     <string name="update_check_failed_server">GitHub 服务暂时不可用，请稍后再试</string>
     <string name="update_already_latest">当前已是最新版本</string>
-    <string name="update_no_release">暂无可用版本</string>
+    <string name="update_no_release">暂无可用更新</string>
 
     <!-- 崩溃处理 -->
     <string name="crash_dialog_title">应用出现错误</string>
