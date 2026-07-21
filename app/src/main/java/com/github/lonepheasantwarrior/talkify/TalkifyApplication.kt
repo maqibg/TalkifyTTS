@@ -3,6 +3,8 @@ package com.github.lonepheasantwarrior.talkify
 import android.app.Application
 import com.github.lonepheasantwarrior.talkify.infrastructure.app.notification.TalkifyNotificationChannel
 import com.github.lonepheasantwarrior.talkify.infrastructure.app.notification.TalkifyNotificationHelper
+import com.github.lonepheasantwarrior.talkify.infrastructure.app.telemetry.DeviceInfoCollector
+import com.github.lonepheasantwarrior.talkify.infrastructure.app.telemetry.TalkifyTelemetry
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
 
 class TalkifyApplication : Application() {
@@ -17,6 +19,17 @@ class TalkifyApplication : Application() {
         TalkifyAppHolder.setContext(this)
         TalkifyExceptionHandler.initialize()
         createNotificationChannels()
+        reportAppOpened()
+    }
+
+    /**
+     * 上报应用启动事件，附带匿名设备画像
+     *
+     * [TalkifyTelemetry] 会在首次调用 [TalkifyTelemetry.trackEvent] 时延迟初始化，
+     * 此处无需显式初始化。
+     */
+    private fun reportAppOpened() {
+        TalkifyTelemetry.trackEvent("app_opened", DeviceInfoCollector.collect(this))
     }
 
     /**

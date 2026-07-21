@@ -10,6 +10,7 @@ activityCompose = "1.13.0"
 composeBom = "2026.06.01"
 dashscope = "2.22.25"
 jlayer = "1.0.1"
+aptabase = "0.0.8"
 navigationCompose = "2.9.8"
 #为兼容dashscope，okhttp停留在4.12.0版本
 #noinspection NewerVersionAvailable
@@ -36,6 +37,7 @@ androidx-navigation-compose = { group = "androidx.navigation", name = "navigatio
 dashscope-sdk = { group = "com.alibaba", name = "dashscope-sdk-java", version.ref = "dashscope" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 jlayer = { group = "javazoom", name = "jlayer", version.ref = "jlayer" }
+aptabase = { group = "com.github.aptabase", name = "aptabase-kotlin", version.ref = "aptabase" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

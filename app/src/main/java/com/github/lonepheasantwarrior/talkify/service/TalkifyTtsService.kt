@@ -14,6 +14,7 @@ import com.github.lonepheasantwarrior.talkify.domain.repository.AppConfigReposit
 import com.github.lonepheasantwarrior.talkify.domain.repository.ProviderConfigRepository
 import com.github.lonepheasantwarrior.talkify.infrastructure.app.notification.TalkifyNotificationHelper
 import com.github.lonepheasantwarrior.talkify.infrastructure.app.repo.SharedPreferencesAppConfigRepository
+import com.github.lonepheasantwarrior.talkify.infrastructure.app.telemetry.TtsTelemetryTracker
 import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.AliyunBailianConfigRepository
 import com.github.lonepheasantwarrior.talkify.service.provider.SynthesisParams
 import com.github.lonepheasantwarrior.talkify.service.provider.TtsProviderApi
@@ -28,6 +29,7 @@ import java.util.Locale
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.resume
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * 前台阅读服务通知 ID
@@ -454,7 +456,7 @@ class TalkifyTtsService : TextToSpeechService() {
         }
 
         val defaultLanguages = provider.getDefaultLanguages()
-        TtsLogger.d("onGetLanguage: return $defaultLanguages")
+        TtsLogger.d("onGetLanguage: return ${defaultLanguages.contentToString()}")
         return defaultLanguages
     }
 
@@ -619,8 +621,12 @@ class TalkifyTtsService : TextToSpeechService() {
             var audioInitialized = false
             var synthesisErrorMessage: String? = null
 
+            // 语音合成事件信息收集（限频上报：模型切换或累计10次触发）
+            val effectiveModelId = config.modelId.ifBlank { provider.getDefaultModelId() }
+            TtsTelemetryTracker.trackIfNeeded(providerId, effectiveModelId, text.length)
+
             // 5. 执行合成 (使用协程挂起)
-            val result = withTimeoutOrNull(120_000L) {
+            val result = withTimeoutOrNull(120_000L.milliseconds) {
                 suspendCancellableCoroutine { continuation ->
                     activeContinuation = continuation
 

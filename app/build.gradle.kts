@@ -89,4 +89,7 @@ dependencies {
     
     // JLayer 用于 MP3 流式解码
     implementation(libs.jlayer)
+
+    // Aptabase 匿名使用统计
+    implementation(libs.aptabase)
 }
