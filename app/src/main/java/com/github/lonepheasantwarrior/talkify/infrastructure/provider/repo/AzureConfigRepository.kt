@@ -14,7 +14,7 @@ import com.github.lonepheasantwarrior.talkify.domain.repository.ProviderConfigRe
  *
  * 注意：微软语音合成无需 API Key，仅存储音色 ID
  */
-class MicrosoftTtsConfigRepository(
+class AzureConfigRepository(
     context: Context
 ) : ProviderConfigRepository {
 

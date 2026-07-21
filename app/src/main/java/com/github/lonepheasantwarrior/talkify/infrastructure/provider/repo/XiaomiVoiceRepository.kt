@@ -9,21 +9,21 @@ import com.github.lonepheasantwarrior.talkify.domain.repository.VoiceRepository
 import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlEntry
 import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlParser
 
-class MiniMaxTtsVoiceRepository(
+class XiaomiVoiceRepository(
     private val context: Context
 ) : VoiceRepository {
 
     private val voices: List<VoiceXmlEntry> by lazy {
-        VoiceXmlParser.parse(context, R.xml.minimax_voices)
+        VoiceXmlParser.parse(context, R.xml.xiaomi_mimo_voices)
     }
 
     override suspend fun getVoicesForProvider(provider: TtsProvider): List<VoiceInfo> {
-        if (provider.id != ProviderIds.MiniMax.value) return emptyList()
+        if (provider.id != ProviderIds.Xiaomi.providerId) return emptyList()
         return voices.map { VoiceInfo(voiceId = it.id, displayName = it.displayName) }
     }
 
     fun getVoicesWithDescription(provider: TtsProvider): List<VoiceInfoWithDescription> {
-        if (provider.id != ProviderIds.MiniMax.value) return emptyList()
+        if (provider.id != ProviderIds.Xiaomi.providerId) return emptyList()
         return voices.map {
             VoiceInfoWithDescription(voiceId = it.id, displayName = it.displayName, description = it.description)
         }

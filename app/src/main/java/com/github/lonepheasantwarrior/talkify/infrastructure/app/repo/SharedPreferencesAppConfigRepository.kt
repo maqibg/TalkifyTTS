@@ -20,9 +20,8 @@ class SharedPreferencesAppConfigRepository(
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     init {
-        // 一次性迁移：将旧版本使用的 "selected_engine" 键迁移至新的 "selected_provider" 键，
-        // 避免已安装用户在概念更名后丢失已选择的供应商。
         migrateLegacySelectedProviderKey()
+        migrateLegacyProviderIds()
     }
 
     private fun migrateLegacySelectedProviderKey() {
@@ -36,6 +35,25 @@ class SharedPreferencesAppConfigRepository(
                     remove(KEY_SELECTED_PROVIDER_LEGACY)
                 }
             }
+        }
+    }
+
+    /**
+     * 将旧版 ProviderIds.value（模型 ID）映射为新版 ProviderIds.providerId（供应商 ID）。
+     *
+     * 旧值（v1.x）→ 新值（v2.x）：
+     *   qwen3-tts → aliyunBailian
+     *   seed-tts-2.0 → volcengine
+     *   tencent-tts → tencentCloud
+     *   microsoft-tts → azure
+     *   xiaomi-mimo-tts → xiaomi
+     *   minimax-tts → miniMax
+     */
+    private fun migrateLegacyProviderIds() {
+        val current = sharedPreferences.getString(KEY_SELECTED_PROVIDER, null) ?: return
+        val migrated = LEGACY_PROVIDER_ID_MAP[current] ?: return
+        sharedPreferences.edit {
+            putString(KEY_SELECTED_PROVIDER, migrated)
         }
     }
 
@@ -79,5 +97,15 @@ class SharedPreferencesAppConfigRepository(
         private const val KEY_SELECTED_PROVIDER_LEGACY = "selected_engine"
         private const val KEY_HAS_REQUESTED_NOTIFICATION = "has_requested_notification"
         private const val KEY_HAS_OPENED_ABOUT_PAGE = "has_opened_about_page"
+
+        /** 旧版 ProviderIds.value → 新版 ProviderIds.providerId 映射 */
+        private val LEGACY_PROVIDER_ID_MAP = mapOf(
+            "qwen3-tts" to "aliyunBailian",
+            "seed-tts-2.0" to "volcengine",
+            "tencent-tts" to "tencentCloud",
+            "microsoft-tts" to "azure",
+            "xiaomi-mimo-tts" to "xiaomi",
+            "minimax-tts" to "miniMax"
+        )
     }
 }

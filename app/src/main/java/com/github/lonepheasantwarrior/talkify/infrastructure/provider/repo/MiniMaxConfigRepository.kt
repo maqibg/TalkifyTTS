@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import com.github.lonepheasantwarrior.talkify.domain.model.BaseProviderConfig
 import com.github.lonepheasantwarrior.talkify.domain.model.MiniMaxTtsConfig
 import com.github.lonepheasantwarrior.talkify.domain.repository.ProviderConfigRepository
+import androidx.core.content.edit
 
 /**
  * MiniMax 语音合成供应商 - 配置仓储实现
@@ -12,7 +13,7 @@ import com.github.lonepheasantwarrior.talkify.domain.repository.ProviderConfigRe
  * 使用 Android SharedPreferences 持久化存储供应商配置
  * 遵循 [ProviderConfigRepository] 接口，便于后续扩展其他存储方式
  */
-class MiniMaxTtsConfigRepository(
+class MiniMaxConfigRepository(
     context: Context
 ) : ProviderConfigRepository {
 
@@ -33,13 +34,13 @@ class MiniMaxTtsConfigRepository(
     override fun saveConfig(providerId: String, config: BaseProviderConfig) {
         val prefsKey = getPrefsKey(providerId)
         val miniMaxConfig = config as? MiniMaxTtsConfig ?: return
-        sharedPreferences.edit()
-            .putString("${prefsKey}_$KEY_API_KEY", miniMaxConfig.apiKey)
-            .putString("${prefsKey}_$KEY_VOICE_ID", miniMaxConfig.voiceId)
-            .putString("${prefsKey}_$KEY_API_URL", miniMaxConfig.apiUrl)
-            .putString("${prefsKey}_$KEY_MODEL_ID", miniMaxConfig.modelId)
-            .putBoolean("${prefsKey}_$KEY_CONTINUOUS_SOUND", miniMaxConfig.continuousSound)
-            .apply()
+        sharedPreferences.edit {
+            putString("${prefsKey}_$KEY_API_KEY", miniMaxConfig.apiKey)
+                .putString("${prefsKey}_$KEY_VOICE_ID", miniMaxConfig.voiceId)
+                .putString("${prefsKey}_$KEY_API_URL", miniMaxConfig.apiUrl)
+                .putString("${prefsKey}_$KEY_MODEL_ID", miniMaxConfig.modelId)
+                .putBoolean("${prefsKey}_$KEY_CONTINUOUS_SOUND", miniMaxConfig.continuousSound)
+        }
     }
 
     override fun hasConfig(providerId: String): Boolean {

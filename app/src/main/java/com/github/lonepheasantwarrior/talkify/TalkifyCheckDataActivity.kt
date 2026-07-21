@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
+import com.github.lonepheasantwarrior.talkify.domain.model.ProviderIds
 import com.github.lonepheasantwarrior.talkify.infrastructure.app.repo.SharedPreferencesAppConfigRepository
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
 import com.github.lonepheasantwarrior.talkify.service.provider.impl.Qwen3TtsProvider
@@ -55,16 +56,16 @@ class TalkifyCheckDataActivity : Activity() {
      * @return 支持的语言代码列表
      */
     private fun getSupportedLanguagesForCurrentProvider(): ArrayList<String> {
-        // 获取当前选择的供应商 ID
+        // 获取当前选择的供应商 ID（新版 providerId 格式，如 "aliyunBailian"、"volcengine"）
         val appConfigRepository = SharedPreferencesAppConfigRepository(this)
         val selectedProviderId = appConfigRepository.getSelectedProviderId()
-            ?: Qwen3TtsProvider.PROVIDER_ID // 默认使用通义千问3
+            ?: ProviderIds.AliyunBailian.providerId // 默认使用通义千问3
 
         TtsLogger.d("CHECK_TTS_DATA: Selected provider = $selectedProviderId")
 
         // 根据供应商 ID 获取对应的静态语言列表
         return when (selectedProviderId) {
-            SeedTts2Provider.PROVIDER_ID -> {
+            ProviderIds.Volcengine.providerId -> {
                 ArrayList(SeedTts2Provider.SUPPORTED_LANGUAGES.toList())
             }
             else -> {

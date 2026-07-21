@@ -46,7 +46,7 @@ object TtsProviderRegistry {
      * 获取默认供应商
      */
     val defaultProvider: TtsProvider
-        get() = ProviderIds.MicrosoftTts.toTtsProvider()
+        get() = ProviderIds.Azure.toTtsProvider()
 
     /**
      * 检查供应商是否已注册

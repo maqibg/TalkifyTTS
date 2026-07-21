@@ -9,7 +9,7 @@ import com.github.lonepheasantwarrior.talkify.domain.repository.VoiceRepository
 import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlEntry
 import com.github.lonepheasantwarrior.talkify.infrastructure.xml.VoiceXmlParser
 
-class TencentTtsVoiceRepository(
+class TencentCloudVoiceRepository(
     private val context: Context
 ) : VoiceRepository {
 
@@ -24,7 +24,7 @@ class TencentTtsVoiceRepository(
     }
 
     override suspend fun getVoicesForProvider(provider: TtsProvider): List<VoiceInfo> {
-        if (provider.id != ProviderIds.TencentTts.value) return emptyList()
+        if (provider.id != ProviderIds.TencentCloud.providerId) return emptyList()
         return voices.map {
             VoiceInfo(
                 voiceId = it.id,

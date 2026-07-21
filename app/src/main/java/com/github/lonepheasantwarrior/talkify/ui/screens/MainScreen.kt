@@ -76,8 +76,8 @@ import com.github.lonepheasantwarrior.talkify.domain.repository.VoiceInfo
 import com.github.lonepheasantwarrior.talkify.domain.repository.VoiceRepository
 import com.github.lonepheasantwarrior.talkify.infrastructure.app.power.PowerOptimizationHelper
 import com.github.lonepheasantwarrior.talkify.infrastructure.app.repo.SharedPreferencesAppConfigRepository
-import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.Qwen3TtsConfigRepository
-import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.Qwen3TtsVoiceRepository
+import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.AliyunBailianConfigRepository
+import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.AliyunBailianVoiceRepository
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
 import com.github.lonepheasantwarrior.talkify.service.provider.TtsProviderFactory
 import com.github.lonepheasantwarrior.talkify.ui.components.BatteryOptimizationDialog
@@ -142,13 +142,13 @@ fun MainScreen(
     // 根据当前供应商获取对应的声音仓储
     fun getVoiceRepository(providerId: String): VoiceRepository {
         return TtsProviderFactory.createVoiceRepository(providerId, context)
-            ?: Qwen3TtsVoiceRepository(context)
+            ?: AliyunBailianVoiceRepository(context)
     }
 
     // 根据当前供应商获取对应的配置仓储
     fun getConfigRepository(providerId: String): ProviderConfigRepository {
         return TtsProviderFactory.createConfigRepository(providerId, context)
-            ?: Qwen3TtsConfigRepository(context)
+            ?: AliyunBailianConfigRepository(context)
     }
 
     val appConfigRepository: AppConfigRepository = remember {

@@ -14,7 +14,7 @@ import com.github.lonepheasantwarrior.talkify.domain.repository.AppConfigReposit
 import com.github.lonepheasantwarrior.talkify.domain.repository.ProviderConfigRepository
 import com.github.lonepheasantwarrior.talkify.infrastructure.app.notification.TalkifyNotificationHelper
 import com.github.lonepheasantwarrior.talkify.infrastructure.app.repo.SharedPreferencesAppConfigRepository
-import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.Qwen3TtsConfigRepository
+import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.AliyunBailianConfigRepository
 import com.github.lonepheasantwarrior.talkify.service.provider.SynthesisParams
 import com.github.lonepheasantwarrior.talkify.service.provider.TtsProviderApi
 import com.github.lonepheasantwarrior.talkify.service.provider.TtsProviderFactory
@@ -257,7 +257,7 @@ class TalkifyTtsService : TextToSpeechService() {
         return providerConfigRepositoryMap.getOrPut(providerId) {
             TtsProviderFactory.createConfigRepository(providerId, applicationContext) ?: run {
                 TtsLogger.w("Unknown provider ID: $providerId, using default Qwen3TtsConfigRepository")
-                Qwen3TtsConfigRepository(applicationContext)
+                AliyunBailianConfigRepository(applicationContext)
             }
         }
     }

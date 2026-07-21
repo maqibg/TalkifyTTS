@@ -1,20 +1,21 @@
 package com.github.lonepheasantwarrior.talkify.service.provider
 
 import android.content.Context
+import com.github.lonepheasantwarrior.talkify.domain.model.ProviderIds
 import com.github.lonepheasantwarrior.talkify.domain.repository.ProviderConfigRepository
 import com.github.lonepheasantwarrior.talkify.domain.repository.VoiceRepository
-import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.MicrosoftTtsConfigRepository
-import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.MicrosoftTtsVoiceRepository
-import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.Qwen3TtsConfigRepository
-import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.Qwen3TtsVoiceRepository
-import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.SeedTts2ConfigRepository
-import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.SeedTts2VoiceRepository
-import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.TencentTtsConfigRepository
-import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.TencentTtsVoiceRepository
-import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.XiaoMiMimoTtsConfigRepository
-import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.XiaoMiMimoTtsVoiceRepository
-import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.MiniMaxTtsConfigRepository
-import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.MiniMaxTtsVoiceRepository
+import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.AzureConfigRepository
+import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.AzureVoiceRepository
+import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.AliyunBailianConfigRepository
+import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.AliyunBailianVoiceRepository
+import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.VolcengineConfigRepository
+import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.VolcengineVoiceRepository
+import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.TencentCloudConfigRepository
+import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.TencentCloudVoiceRepository
+import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.XiaomiConfigRepository
+import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.XiaomiVoiceRepository
+import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.MiniMaxConfigRepository
+import com.github.lonepheasantwarrior.talkify.infrastructure.provider.repo.MiniMaxVoiceRepository
 import com.github.lonepheasantwarrior.talkify.service.TtsLogger
 import com.github.lonepheasantwarrior.talkify.service.provider.impl.MicrosoftTtsProvider
 import com.github.lonepheasantwarrior.talkify.service.provider.impl.Qwen3TtsProvider
@@ -103,35 +104,35 @@ object TtsProviderFactory {
     private fun initializeRegistry(): Map<String, ComponentFactories> {
         TtsLogger.d("TtsProviderFactory: initializing registry")
         return mapOf(
-            Qwen3TtsProvider.PROVIDER_ID to ComponentFactories(
+            ProviderIds.AliyunBailian.providerId to ComponentFactories(
                 createProvider = { Qwen3TtsProvider() },
-                createConfigRepo = { ctx -> Qwen3TtsConfigRepository(ctx) },
-                createVoiceRepo = { ctx -> Qwen3TtsVoiceRepository(ctx) }
+                createConfigRepo = { ctx -> AliyunBailianConfigRepository(ctx) },
+                createVoiceRepo = { ctx -> AliyunBailianVoiceRepository(ctx) }
             ),
-            SeedTts2Provider.PROVIDER_ID to ComponentFactories(
+            ProviderIds.Volcengine.providerId to ComponentFactories(
                 createProvider = { SeedTts2Provider() },
-                createConfigRepo = { ctx -> SeedTts2ConfigRepository(ctx) },
-                createVoiceRepo = { ctx -> SeedTts2VoiceRepository(ctx) }
+                createConfigRepo = { ctx -> VolcengineConfigRepository(ctx) },
+                createVoiceRepo = { ctx -> VolcengineVoiceRepository(ctx) }
             ),
-            TencentTtsProvider.PROVIDER_ID to ComponentFactories(
+            ProviderIds.TencentCloud.providerId to ComponentFactories(
                 createProvider = { TencentTtsProvider() },
-                createConfigRepo = { ctx -> TencentTtsConfigRepository(ctx) },
-                createVoiceRepo = { ctx -> TencentTtsVoiceRepository(ctx) }
+                createConfigRepo = { ctx -> TencentCloudConfigRepository(ctx) },
+                createVoiceRepo = { ctx -> TencentCloudVoiceRepository(ctx) }
             ),
-            MicrosoftTtsProvider.PROVIDER_ID to ComponentFactories(
+            ProviderIds.Azure.providerId to ComponentFactories(
                 createProvider = { MicrosoftTtsProvider() },
-                createConfigRepo = { ctx -> MicrosoftTtsConfigRepository(ctx) },
-                createVoiceRepo = { ctx -> MicrosoftTtsVoiceRepository(ctx) }
+                createConfigRepo = { ctx -> AzureConfigRepository(ctx) },
+                createVoiceRepo = { ctx -> AzureVoiceRepository(ctx) }
             ),
-            XiaoMiMimoTtsProvider.PROVIDER_ID to ComponentFactories(
+            ProviderIds.Xiaomi.providerId to ComponentFactories(
                 createProvider = { XiaoMiMimoTtsProvider() },
-                createConfigRepo = { ctx -> XiaoMiMimoTtsConfigRepository(ctx) },
-                createVoiceRepo = { ctx -> XiaoMiMimoTtsVoiceRepository(ctx) }
+                createConfigRepo = { ctx -> XiaomiConfigRepository(ctx) },
+                createVoiceRepo = { ctx -> XiaomiVoiceRepository(ctx) }
             ),
-            MiniMaxTtsProvider.PROVIDER_ID to ComponentFactories(
+            ProviderIds.MiniMax.providerId to ComponentFactories(
                 createProvider = { MiniMaxTtsProvider() },
-                createConfigRepo = { ctx -> MiniMaxTtsConfigRepository(ctx) },
-                createVoiceRepo = { ctx -> MiniMaxTtsVoiceRepository(ctx) }
+                createConfigRepo = { ctx -> MiniMaxConfigRepository(ctx) },
+                createVoiceRepo = { ctx -> MiniMaxVoiceRepository(ctx) }
             )
         ).also {
             TtsLogger.i("TtsProviderFactory: ${it.size} providers registered")
